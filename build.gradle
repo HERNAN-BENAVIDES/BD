@@ -1,0 +1,70 @@
+plugins {
+	id 'java'
+	id 'application'
+	id 'org.springframework.boot' version '3.4.5'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.openjfx.javafxplugin' version '0.0.13' // Plugin para JavaFX
+}
+
+group = 'co.edu.uniquindio'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+// Configuración de JavaFX
+javafx {
+	version = '17.0.6'
+	modules = ['javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing', 'javafx.media']
+}
+
+dependencies {
+	// Spring Boot
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// JavaFX y librerías relacionadas
+	implementation('org.controlsfx:controlsfx:11.2.1')
+	implementation('com.dlsc.formsfx:formsfx-core:11.6.0') {
+		exclude(group: 'org.openjfx')
+	}
+	implementation('net.synedra:validatorfx:0.5.0') {
+		exclude(group: 'org.openjfx')
+	}
+	implementation('org.kordamp.ikonli:ikonli-javafx:12.3.1')
+	implementation('org.kordamp.bootstrapfx:bootstrapfx-core:0.4.0')
+	implementation('eu.hansolo:tilesfx:17.0.1') {
+		exclude(group: 'org.openjfx')
+	}
+	implementation('com.github.almasb:fxgl:17.3') {
+		exclude(group: 'org.openjfx', module: 'javafx-media')
+		exclude(group: 'org.jetbrains.kotlin')
+	}
+	// Dependencias de JavaFX (agrega clasificadores)
+	implementation('org.openjfx:javafx-controls:17.0.6:win')
+	implementation('org.openjfx:javafx-fxml:17.0.6:win')
+	implementation('org.openjfx:javafx-graphics:17.0.6:win')
+
+	// Testing
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation "org.junit.jupiter:junit-jupiter-api:5.10.2"
+	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.10.2"
+}
+
+// Configuración de la clase principal (ajusta el nombre de tu clase)
+application {
+	mainClass = 'co.edu.uniquindio.demo.BdApplication' // Clase con main()
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
