@@ -1,6 +1,8 @@
 package co.edu.uniquindio.bd.viewController;
 
 import co.edu.uniquindio.bd.controller.LoginController;
+import co.edu.uniquindio.bd.model.Estudiante;
+import co.edu.uniquindio.bd.model.Profesor;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -116,20 +118,25 @@ public class LoginViewController implements Initializable {
         // Show authenticating message
         statusLabel.setText("Iniciando sesión como " + selectedRole + "...");
 
-        // Authenticate user through the controller
-        Object authenticatedUser = loginController.authenticateUser(email, password, selectedRole);
+        Estudiante estudiante = null;
+        Profesor profesor = null;
 
-        if (authenticatedUser != null) {
-            // Authentication successful
-            statusLabel.setText("Autenticación exitosa como " + selectedRole);
-            System.out.println("Login successful - Email: " + email + ", Role: " + selectedRole);
+        if (roleComboBox.getValue().equals("Estudiante")) {
+            estudiante = loginController.authenticateEstudiante(email, password);
+        }else {
+            profesor = loginController.authenticateProfesor(email, password);
+        }
 
-            // TODO: Redirect to appropriate screen based on role
-            // This would involve loading a new FXML view or showing a new stage
-        } else {
-            // Authentication failed
-            statusLabel.setText("Credenciales inválidas. Por favor, intente de nuevo.");
-            System.out.println("Login failed - Email: " + email + ", Role: " + selectedRole);
+
+        if (roleComboBox.getValue().equals("Estudiante") && estudiante.getIdestudiante() != -1) {
+            // Successful login for Estudiante
+            statusLabel.setText("Bienvenido " + estudiante.getNombre() + " " + estudiante.getApellido());
+        }else if (roleComboBox.getValue().equals("Profesor") && profesor.getIdprofesor() != -1){
+            // Successful login for Profesor
+            statusLabel.setText("Bienvenido " + profesor.getNombre() + " " + profesor.getApellido());
+        }else {
+            // Failed login
+            statusLabel.setText("Credenciales incorrectas. Intente nuevamente.");
         }
     }
 
