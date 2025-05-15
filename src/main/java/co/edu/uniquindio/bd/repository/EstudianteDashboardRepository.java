@@ -1,14 +1,17 @@
 package co.edu.uniquindio.bd.repository;
 
 import co.edu.uniquindio.bd.dto.CursoEstudianteDTO;
+import co.edu.uniquindio.bd.dto.ExamenDto;
 import co.edu.uniquindio.bd.dto.TemaDTO;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.ParameterMode;
+import java.sql.Timestamp;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.StoredProcedureQuery;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Repository;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,5 +83,50 @@ public class EstudianteDashboardRepository {
         }
 
         return temas;
+    }
+
+    public List<ExamenDto> obtenerExamenesPorEstudiante(int idestudiante) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("obtener_examenes_por_estudiante");
+
+        // Register parameters
+        sp.registerStoredProcedureParameter("p_idestudiante", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_cursor", void.class, ParameterMode.REF_CURSOR);
+
+        // Set input parameter
+        sp.setParameter("p_idestudiante", idestudiante);
+
+        // Execute the stored procedure
+        sp.execute();
+
+        // Process the results
+        List<ExamenDto> examenes = new ArrayList<>();
+        List<Object[]> resultList = sp.getResultList();
+
+        for (Object[] row : resultList) {
+            ExamenDto examen = new ExamenDto();
+            examen.setIdExamen((Integer) row[0]);
+            examen.setNombreExamen((String) row[1]);
+            Timestamp inicio = (Timestamp) row[2];
+            Timestamp fin = (Timestamp) row[3];
+
+            DateTimeFormatter formatterHora = DateTimeFormatter.ofPattern("HH:mm");
+            DateTimeFormatter formatterFecha = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+            String horaInicio = inicio.toLocalDateTime().format(formatterHora);
+            String horaFin = fin.toLocalDateTime().format(formatterHora);
+            String fecha = inicio.toLocalDateTime().format(formatterFecha);
+
+            examen.setHoraExamen(horaInicio + " - " + horaFin);
+            examen.setFechaExamen(fecha);
+
+            examen.setDuracionExamen(String.valueOf(java.time.Duration.between(inicio.toLocalDateTime(), fin.toLocalDateTime()).toMinutes()));
+            examen.setPreguntasExamen((Integer) row[5]);
+            examen.setTemaExamen((String) row[6]);
+            examen.setGrupoExamen(((String) row[7]));
+            examen.setCursoExamen(((String) row[8]));
+            examenes.add(examen);
+        }
+
+        return examenes;
     }
 }

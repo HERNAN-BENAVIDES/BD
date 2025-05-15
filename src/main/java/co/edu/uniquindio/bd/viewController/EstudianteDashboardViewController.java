@@ -3,6 +3,7 @@ package co.edu.uniquindio.bd.viewController;
 import co.edu.uniquindio.bd.controller.EstudianteDashboardController;
 import co.edu.uniquindio.bd.dto.CursoEstudianteDTO;
 import co.edu.uniquindio.bd.dto.EstudianteDto;
+import co.edu.uniquindio.bd.dto.ExamenDto;
 import co.edu.uniquindio.bd.dto.TemaDTO;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -76,6 +77,36 @@ public class EstudianteDashboardViewController implements Initializable {
     private TableColumn<TemaDTO, String> colDescripcion;
 
     @FXML
+    private TableView<ExamenDto> examenesTableView;
+
+    @FXML
+    private TableColumn<ExamenDto, Integer> colIdExamen;
+
+    @FXML
+    private TableColumn<ExamenDto, String> colNombreExamen;
+
+    @FXML
+    private TableColumn<ExamenDto, String> colHoraExamen;
+
+    @FXML
+    private TableColumn<ExamenDto, String> colFechaExamen;
+
+    @FXML
+    private TableColumn<ExamenDto, String> colTiempoExamen;
+
+    @FXML
+    private TableColumn<ExamenDto, Integer> colPreguntasExamen;
+
+    @FXML
+    private TableColumn<ExamenDto, String> colTemaExamen;
+
+    @FXML
+    private TableColumn<ExamenDto, String> colGrupoExamen;
+
+    @FXML
+    private TableColumn<ExamenDto, String> colCursoExamen;
+
+    @FXML
     private TableView<?> gradesTableView;
 
     @FXML
@@ -88,6 +119,31 @@ public class EstudianteDashboardViewController implements Initializable {
         btnVerTemas.disableProperty().bind(
                 coursesTableView.getSelectionModel().selectedItemProperty().isNull()
         );
+
+        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab.getText().equals("Examenes")) {
+                cargarExamenesEstudiante();
+            }
+        });
+
+    }
+
+    private void cargarExamenesEstudiante() {
+        colIdExamen.setCellValueFactory(new PropertyValueFactory<>("idExamen"));
+        colNombreExamen.setCellValueFactory(new PropertyValueFactory<>("nombreExamen"));
+        colHoraExamen.setCellValueFactory(new PropertyValueFactory<>("horaExamen"));
+        colFechaExamen.setCellValueFactory(new PropertyValueFactory<>("fechaExamen"));
+        colTiempoExamen.setCellValueFactory(new PropertyValueFactory<>("duracionExamen"));
+        colPreguntasExamen.setCellValueFactory(new PropertyValueFactory<>("preguntasExamen"));
+        colTemaExamen.setCellValueFactory(new PropertyValueFactory<>("temaExamen"));
+        colGrupoExamen.setCellValueFactory(new PropertyValueFactory<>("grupoExamen"));
+        colCursoExamen.setCellValueFactory(new PropertyValueFactory<>("cursoExamen"));
+
+        if (estudiante != null) {
+            List<ExamenDto> examenes = estudianteDashboardController.obtenerExamenesPorEstudiante(estudiante.getIdestudiante());
+            examenesTableView.setItems(FXCollections.observableArrayList(examenes));
+        }
+
     }
 
     private void cargarTablaCursos() {

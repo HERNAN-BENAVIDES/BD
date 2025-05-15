@@ -1,6 +1,7 @@
 package co.edu.uniquindio.bd.controller;
 
 import co.edu.uniquindio.bd.dto.CursoEstudianteDTO;
+import co.edu.uniquindio.bd.dto.ExamenDto;
 import co.edu.uniquindio.bd.dto.TemaDTO;
 import co.edu.uniquindio.bd.service.EstudianteDashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,5 +27,9 @@ public class EstudianteDashboardController {
 
     public List<TemaDTO> obtenerTemasPorCurso(Integer idCurso) {
         return estudianteDashboardService.obtenerTemasPorCurso(idCurso);
+    }
+
+    public List<ExamenDto> obtenerExamenesPorEstudiante(int idestudiante) {
+        return estudianteDashboardService.obtenerExamenesPorEstudiante(idestudiante);
     }
 }
