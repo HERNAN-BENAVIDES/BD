@@ -1,20 +1,26 @@
 package co.edu.uniquindio.bd.viewController;
 
 import co.edu.uniquindio.bd.controller.LoginController;
-import co.edu.uniquindio.bd.model.Estudiante;
-import co.edu.uniquindio.bd.model.Profesor;
+import co.edu.uniquindio.bd.dto.EstudianteDto;
+import co.edu.uniquindio.bd.dto.ProfesorDto;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.paint.Color;
 import javafx.animation.ScaleTransition;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -23,6 +29,9 @@ public class LoginViewController implements Initializable {
 
     @Autowired
     private LoginController loginController;
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @FXML
     private TextField emailField;
@@ -118,8 +127,8 @@ public class LoginViewController implements Initializable {
         // Show authenticating message
         statusLabel.setText("Iniciando sesión como " + selectedRole + "...");
 
-        Estudiante estudiante = null;
-        Profesor profesor = null;
+        EstudianteDto estudiante = null;
+        ProfesorDto profesor = null;
 
         if (roleComboBox.getValue().equals("Estudiante")) {
             estudiante = loginController.authenticateEstudiante(email, password);
@@ -131,6 +140,42 @@ public class LoginViewController implements Initializable {
         if (roleComboBox.getValue().equals("Estudiante") && estudiante.getIdestudiante() != -1) {
             // Successful login for Estudiante
             statusLabel.setText("Bienvenido " + estudiante.getNombre() + " " + estudiante.getApellido());
+
+            // Open student dashboard window
+            try {
+                // Load the FXML file
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/co/edu/uniquindio/bd/estudiante-dashboard.fxml"));
+
+                // Set the controller factory to use Spring beans
+                loader.setControllerFactory(applicationContext::getBean);
+
+                // Load the root node
+                Parent root = loader.load();
+
+                // Get the controller and set the student
+                EstudianteDashboardViewController controller = loader.getController();
+                controller.setEstudiante(estudiante);
+
+                // Create a new scene
+                Scene scene = new Scene(root);
+
+                // Create a new stage
+                Stage stage = new Stage();
+                stage.setScene(scene);
+                stage.setTitle("Dashboard de Estudiante");
+                stage.setResizable(true);
+
+                // Show the new window
+                stage.show();
+
+                // Close the login window
+                ((Stage) loginButton.getScene().getWindow()).close();
+
+            } catch (IOException e) {
+                statusLabel.setText("Error al abrir el dashboard: " + e.getMessage());
+                e.printStackTrace();
+            }
+
         }else if (roleComboBox.getValue().equals("Profesor") && profesor.getIdprofesor() != -1){
             // Successful login for Profesor
             statusLabel.setText("Bienvenido " + profesor.getNombre() + " " + profesor.getApellido());

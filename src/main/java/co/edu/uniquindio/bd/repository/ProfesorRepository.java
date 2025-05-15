@@ -18,7 +18,6 @@ public class ProfesorRepository {
     private EntityManager em; // para ser inyectado manualmente
 
     public  Map<String, Object> loginProfesor(String email, String contrasenia) {
-        System.out.println("ProfesorRepository.loginProfesor()");
         StoredProcedureQuery sp = em.createStoredProcedureQuery("login_profesor");
 
         sp.registerStoredProcedureParameter("p_email", String.class, ParameterMode.IN);
@@ -40,8 +39,6 @@ public class ProfesorRepository {
         result.put("apellido", sp.getOutputParameterValue("p_apellido"));
         result.put("email", sp.getOutputParameterValue("p_email_out"));
         result.put("contrasenia", sp.getOutputParameterValue("p_contrasenia_out"));
-
-        System.out.println("ProfesorRepository.loginProfesor() result: " + result);
 
         return result;
     }

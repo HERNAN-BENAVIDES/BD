@@ -1,4 +1,4 @@
-package co.edu.uniquindio.bd.model;
+package co.edu.uniquindio.bd.dto;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -7,16 +7,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-public class Profesor {
+public class ProfesorDto {
     @Id
     private Integer idprofesor;
     private String nombre;
     private String apellido;
     private String email;
     private String contrasenia;
+
 }
