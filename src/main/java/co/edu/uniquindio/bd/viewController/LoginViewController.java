@@ -5,16 +5,21 @@ import co.edu.uniquindio.bd.model.Estudiante;
 import co.edu.uniquindio.bd.model.Profesor;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.paint.Color;
 import javafx.animation.ScaleTransition;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
+import co.edu.uniquindio.bd.BdApplication;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -85,58 +90,48 @@ public class LoginViewController implements Initializable {
 
     @FXML
     public void handleLogin(ActionEvent event) {
-        // Play button animation
         playButtonAnimation();
 
-        // Get the values from the form
         String email = emailField.getText().trim();
         String password = passwordField.getText();
         String selectedRole = roleComboBox.getValue();
 
-        // Validate inputs
-        if (email.isEmpty()) {
-            statusLabel.setText("Por favor, ingrese su correo electrónico");
+        if (email.isEmpty() || password.isEmpty() || selectedRole == null) {
+            statusLabel.setText("Por favor, complete todos los campos.");
             return;
         }
 
-        if (password.isEmpty()) {
-            statusLabel.setText("Por favor, ingrese su contraseña");
-            return;
-        }
-
-        if (selectedRole == null) {
-            statusLabel.setText("Por favor, seleccione un rol");
-            return;
-        }
-
-        // Basic email validation
         if (!isValidEmail(email)) {
-            statusLabel.setText("Por favor, ingrese un correo electrónico válido");
+            statusLabel.setText("Por favor, ingrese un correo electrónico válido.");
             return;
         }
 
-        // Show authenticating message
-        statusLabel.setText("Iniciando sesión como " + selectedRole + "...");
+        try {
+            if (selectedRole.equals("Profesor")) {
+                Profesor profesor = loginController.authenticateProfesor(email, password);
 
-        Estudiante estudiante = null;
-        Profesor profesor = null;
+                if (profesor != null && profesor.getIdprofesor() != null) {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/co/edu/uniquindio/bd/CrearExamen.fxml"));
+                    loader.setControllerFactory(BdApplication.getSpringContext()::getBean); // Configurar el ControllerFactory
 
-        if (roleComboBox.getValue().equals("Estudiante")) {
-            estudiante = loginController.authenticateEstudiante(email, password);
-        }else {
-            profesor = loginController.authenticateProfesor(email, password);
-        }
+                    Parent root = loader.load(); // Cargar el FXML después de configurar el ControllerFactory
+                    CrearExamenViewController controller = loader.getController(); // Obtener el controlador
+                    controller.setProfesor(profesor); // Pasar el profesor al controlador
 
-
-        if (roleComboBox.getValue().equals("Estudiante") && estudiante.getIdestudiante() != -1) {
-            // Successful login for Estudiante
-            statusLabel.setText("Bienvenido " + estudiante.getNombre() + " " + estudiante.getApellido());
-        }else if (roleComboBox.getValue().equals("Profesor") && profesor.getIdprofesor() != -1){
-            // Successful login for Profesor
-            statusLabel.setText("Bienvenido " + profesor.getNombre() + " " + profesor.getApellido());
-        }else {
-            // Failed login
-            statusLabel.setText("Credenciales incorrectas. Intente nuevamente.");
+                    Scene scene = new Scene(root);
+                    Stage stage = (Stage) loginButton.getScene().getWindow();
+                    stage.setScene(scene);
+                    stage.setTitle("Crear Examen");
+                    stage.show();
+                } else {
+                    statusLabel.setText("Credenciales incorrectas para el profesor.");
+                }
+            } else {
+                statusLabel.setText("Funcionalidad para estudiantes no implementada.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            statusLabel.setText("Ocurrió un error al cargar la ventana.");
         }
     }
 

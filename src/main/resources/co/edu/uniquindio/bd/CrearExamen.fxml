@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane prefHeight="600" prefWidth="800" stylesheets="@../../../../application.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="co.edu.uniquindio.bd.viewController.CrearExamenViewController">
+    <left>
+        <VBox spacing="0" style="-fx-background-color: #303f9f; -fx-padding: 0;">
+            <children>
+                <!-- Título centrado -->
+                <HBox alignment="CENTER" style="-fx-padding: 20 0 10 0;">
+                    <children>
+                        <Label text="EducaApp" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;" />
+                    </children>
+                </HBox>
+                <!-- Opciones de navegación -->
+                <Button fx:id="crearExamenButton" styleClass="dashboard-button" text="Crear Examen" onAction="#handleDashboardNavigation" />
+                <Button fx:id="verExamenesButton" styleClass="dashboard-button" text="Ver Exámenes" onAction="#handleDashboardNavigation" />
+                <Button fx:id="crearPreguntaButton" styleClass="dashboard-button" text="Crear Pregunta" onAction="#handleDashboardNavigation" />
+                <Button fx:id="verEstadisticasButton" styleClass="dashboard-button" text="Ver Estadísticas" onAction="#handleDashboardNavigation" />
+            </children>
+        </VBox>
+    </left>
+
+    <center>
+        <VBox alignment="TOP_CENTER" spacing="20" style="-fx-padding: 20;">
+           <children>
+               <Label style="-fx-font-size: 24px; -fx-font-weight: bold;" text="Crear Examen" />
+               <Label style="-fx-font-size: 16px;" text="Seleccione el grupo en donde desea crear el examen." />
+               <ScrollPane fitToWidth="true">
+                  <content>
+                      <VBox fx:id="groupContainer" spacing="15" style="-fx-padding: 10;" />
+                  </content>
+               </ScrollPane>
+           </children>
+        </VBox>
+    </center>
+</BorderPane>

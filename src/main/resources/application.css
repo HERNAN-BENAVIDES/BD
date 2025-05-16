@@ -1,0 +1,55 @@
+.dashboard-button {
+    -fx-background-color: #3949ab;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-pref-width: 200px;
+    -fx-pref-height: 40px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+    -fx-background-radius: 0; /* Sin esquinas redondeadas */
+    -fx-border-radius: 0; /* Sin esquinas redondeadas */
+}
+
+.dashboard-button:hover {
+    -fx-background-color: #5c6bc0;
+}
+
+.dashboard-button:pressed {
+    -fx-background-color: #303f9f;
+}
+
+.dashboard-button.active {
+    -fx-background-color: white;
+    -fx-text-fill: #3949ab;
+    -fx-font-weight: bold;
+    -fx-border-color: #3949ab;
+    -fx-border-width: 0;
+    -fx-background-radius: 0; /* Sin esquinas redondeadas */
+    -fx-border-radius: 0; /* Sin esquinas redondeadas */
+}
+
+.dashboard-button.active:hover {
+    -fx-background-color: #e3f2fd;
+}
+
+.card-button {
+    -fx-background-color: #3949ab;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-padding: 8;
+}
+
+.card-button:hover {
+    -fx-background-color: #5c6bc0; /* Cambia el color al hacer hover */
+    -fx-text-fill: #ffffff; /* Asegura que el texto siga siendo visible */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 5, 0, 0, 0); /* Agrega un efecto de sombra */
+}
+
+.card-button:pressed {
+    -fx-background-color: #303f9f; /* Color al presionar */
+}
