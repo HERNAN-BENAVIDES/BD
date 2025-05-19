@@ -1,5 +1,6 @@
 package co.edu.uniquindio.bd.dto;
 
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,10 +10,9 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class TemaDTO {
-    private int idTema;
-    private String nombre;
-    private String unidad;
-    private String descripcion;
+public class OpcionDto {
+    @Id
+    private Integer idOpcionSeleccion;
+    private String textoOpcion;
+    private int escorrecta;
 }
-

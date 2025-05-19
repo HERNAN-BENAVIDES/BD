@@ -67,7 +67,12 @@
                 </TitledPane>
 
                 <!-- Main TabPane -->
-                <TabPane fx:id="tabPane" prefHeight="250.0" style="-fx-border-color: #c5cae9; -fx-border-radius: 5;">
+                <TabPane fx:id="tabPane"
+                        AnchorPane.topAnchor="200.0"
+                        AnchorPane.bottomAnchor="20.0"
+                        AnchorPane.leftAnchor="20.0"
+                        AnchorPane.rightAnchor="20.0"
+                        style="-fx-border-color: #c5cae9; -fx-border-radius: 5;">
                     <tabs>
                         <!-- Cursos Tab -->
                         <Tab text="Cursos" closable="false">
@@ -133,6 +138,12 @@
                                             <TableColumn fx:id="colCursoExamen" text="Curso" />
                                         </columns>
                                     </TableView>
+                                    <HBox alignment="CENTER_RIGHT">
+                                        <Button fx:id="btnPresentarExamen" text="Presentar Examen"
+                                                onAction="#handlePresentarExamen"
+                                                disable="true"
+                                        />
+                                    </HBox>
                                 </VBox>
                             </content>
                         </Tab>

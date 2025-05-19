@@ -1,29 +1,45 @@
 package co.edu.uniquindio.bd.viewController;
 
 import co.edu.uniquindio.bd.controller.EstudianteDashboardController;
-import co.edu.uniquindio.bd.dto.CursoEstudianteDTO;
-import co.edu.uniquindio.bd.dto.EstudianteDto;
-import co.edu.uniquindio.bd.dto.ExamenDto;
-import co.edu.uniquindio.bd.dto.TemaDTO;
+import co.edu.uniquindio.bd.dto.*;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.*;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
+import javafx.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URL;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 @Component
 public class EstudianteDashboardViewController implements Initializable {
-
-    @Autowired
-    private LoginViewController loginViewController;
 
     @Autowired
     private EstudianteDashboardController estudianteDashboardController;
@@ -33,6 +49,9 @@ public class EstudianteDashboardViewController implements Initializable {
 
     @FXML
     private Button btnVerTemas;
+
+    @FXML
+    private Button btnPresentarExamen;
 
     @FXML
     private Label studentNameLabel;
@@ -47,34 +66,34 @@ public class EstudianteDashboardViewController implements Initializable {
     private Label studentEmailLabel;
 
     @FXML
-    private TableView<CursoEstudianteDTO> coursesTableView;
+    private TableView<CursoEstudianteDto> coursesTableView;
 
     @FXML
-    private TableColumn<CursoEstudianteDTO, Short> colIdCurso;
+    private TableColumn<CursoEstudianteDto, Short> colIdCurso;
 
     @FXML
-    private TableColumn<CursoEstudianteDTO, String> colNombreCurso;
+    private TableColumn<CursoEstudianteDto, String> colNombreCurso;
 
     @FXML
-    private TableColumn<CursoEstudianteDTO, String> colNombreProfesor;
+    private TableColumn<CursoEstudianteDto, String> colNombreProfesor;
 
     @FXML
-    private TableColumn<CursoEstudianteDTO, String> colGrupo;
+    private TableColumn<CursoEstudianteDto, String> colGrupo;
 
     @FXML
-    private TableView<TemaDTO> temasTableView;
+    private TableView<TemaDto> temasTableView;
 
     @FXML
-    private TableColumn<TemaDTO, Integer> colIdTema;
+    private TableColumn<TemaDto, Integer> colIdTema;
 
     @FXML
-    private TableColumn<TemaDTO, String> colNombreTema;
+    private TableColumn<TemaDto, String> colNombreTema;
 
     @FXML
-    private TableColumn<TemaDTO, String> colUnidad;
+    private TableColumn<TemaDto, String> colUnidad;
 
     @FXML
-    private TableColumn<TemaDTO, String> colDescripcion;
+    private TableColumn<TemaDto, String> colDescripcion;
 
     @FXML
     private TableView<ExamenDto> examenesTableView;
@@ -107,6 +126,9 @@ public class EstudianteDashboardViewController implements Initializable {
     private TableColumn<ExamenDto, String> colCursoExamen;
 
     @FXML
+    private VBox contenedorPreguntas;
+
+    @FXML
     private TableView<?> gradesTableView;
 
     @FXML
@@ -123,6 +145,13 @@ public class EstudianteDashboardViewController implements Initializable {
         tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
             if (newTab.getText().equals("Examenes")) {
                 cargarExamenesEstudiante();
+
+                examenesTableView.getSelectionModel().selectedItemProperty().addListener((obsExamen, oldExamen, newExamen) -> {
+                    if (newExamen != null) {
+                        verificarDisponibilidadExamen(newExamen);
+                    }
+                });
+
             }
         });
 
@@ -154,7 +183,7 @@ public class EstudianteDashboardViewController implements Initializable {
 
         // Llama al procedimiento que devuelve los cursos del estudiante
         if (estudiante != null) {
-            List<CursoEstudianteDTO> cursos = estudianteDashboardController.obtenerCursosPorEstudiante(estudiante.getIdestudiante());
+            List<CursoEstudianteDto> cursos = estudianteDashboardController.obtenerCursosPorEstudiante(estudiante.getIdestudiante());
             coursesTableView.setItems(FXCollections.observableArrayList(cursos));
         }
         cargarTablaTemas();
@@ -207,12 +236,488 @@ public class EstudianteDashboardViewController implements Initializable {
         obtenerTemasCursoSeleccionado();
     }
 
+    @FXML
+    public void handlePresentarExamen(ActionEvent event) {
+        // 1. Recuperar preguntas
+        List<PreguntaDto> preguntas = estudianteDashboardController
+                .obtenerPreguntasExamen(examenesTableView.getSelectionModel().getSelectedItem().getIdExamen());
+        if (preguntas.isEmpty()) {
+            mostrarAlerta(Alert.AlertType.WARNING, "Examen vacío", "No hay preguntas para este examen.");
+            return;
+        }
+
+        // 2. Crear y configurar el Tab de examen
+        Tab tabExamen = crearTabExamen();
+
+        // 3. Crear el contenedor principal dentro del Tab
+        VBox contenido = crearContenedorExamen(tabExamen);
+
+        // 4. Añadir la primera pregunta y el botón "Siguiente"
+        iniciarNavegacionPreguntas(contenido, preguntas, tabExamen);
+    }
+
+    private Tab crearTabExamen() {
+        Tab tab = new Tab("Examen en Curso");
+        tab.setClosable(false);        // no se puede cerrar
+        tabPane.getTabs().add(tab);
+        tabPane.getSelectionModel().select(tab);
+        logoutButton.setDisable(true); // deshabilitar logout
+        // impedir que cambie de pestaña
+        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab != tab) {
+                tabPane.getSelectionModel().select(tab);
+            }
+        });
+        return tab;
+    }
+
+    private VBox crearContenedorExamen(Tab tabExamen) {
+        VBox box = new VBox(10);
+        box.setStyle("-fx-padding: 10;");
+        tabExamen.setContent(box);
+        return box;
+    }
+
+    private void iniciarNavegacionPreguntas(VBox contenido, List<PreguntaDto> preguntas, Tab tabExamen) {
+
+        AtomicInteger indice = new AtomicInteger(0);
+
+        // 4.1 Mostrar primera pregunta
+        Node vistaInicial = construirVistaPregunta(preguntas.get(0));
+        contenido.getChildren().add(vistaInicial);
+
+        // 4.2 Crear botón Siguiente
+        Button btnSiguiente = new Button("Siguiente");
+        HBox hBoxBtn = new HBox(btnSiguiente);
+        hBoxBtn.setAlignment(Pos.CENTER_RIGHT);
+        contenido.getChildren().add(hBoxBtn);
+
+        // 4.3 Lógica de avance
+        btnSiguiente.setOnAction(e -> {
+            int i = indice.incrementAndGet();
+            if (i < preguntas.size()) {
+                // reemplazar la vista de la pregunta
+                contenido.getChildren().set(0, construirVistaPregunta(preguntas.get(i)));
+                // si es la última, cambias el texto
+                if (i == preguntas.size() - 1) {
+                    btnSiguiente.setText("Finalizar");
+                }
+            } else {
+                // fin del examen
+                btnSiguiente.setDisable(true);
+                mostrarAlerta(Alert.AlertType.INFORMATION, "Fin de examen", "Has completado el examen. Gracias por participar.");
+                logoutButton.setDisable(false);
+            }
+        });
+    }
+
+
     private void obtenerTemasCursoSeleccionado() {
-        CursoEstudianteDTO cursoSeleccionado = coursesTableView.getSelectionModel().getSelectedItem();
+        CursoEstudianteDto cursoSeleccionado = coursesTableView.getSelectionModel().getSelectedItem();
         if (cursoSeleccionado != null) {
-            List<TemaDTO> temas = estudianteDashboardController.obtenerTemasPorCurso(cursoSeleccionado.getIdCurso());
+            List<TemaDto> temas = estudianteDashboardController.obtenerTemasPorCurso(cursoSeleccionado.getIdCurso());
 
             temasTableView.setItems(FXCollections.observableArrayList(temas));}
+    }
+
+
+    private void verificarDisponibilidadExamen(ExamenDto examenSeleccionado) {
+        try {
+            // Parsear la fecha
+            DateTimeFormatter formatterFecha = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            LocalDate fecha = LocalDate.parse(examenSeleccionado.getFechaExamen(), formatterFecha);
+
+            // Parsear la hora
+            String[] horas = examenSeleccionado.getHoraExamen().split("-");
+            DateTimeFormatter formatterHora = DateTimeFormatter.ofPattern("HH:mm");
+
+            LocalTime horaInicio = LocalTime.parse(horas[0].trim(), formatterHora);
+            LocalTime horaFin = LocalTime.parse(horas[1].trim(), formatterHora);
+
+            // Construir rangos de fecha y hora
+            LocalDateTime inicioExamen = LocalDateTime.of(fecha, horaInicio);
+            LocalDateTime finExamen = LocalDateTime.of(fecha, horaFin);
+            LocalDateTime ahora = LocalDateTime.now();
+
+            if (ahora.isAfter(inicioExamen) && ahora.isBefore(finExamen)) {
+                mostrarAlerta(Alert.AlertType.INFORMATION, "Acceso concedido", "Puedes presentar el examen.");
+                // Aquí puedes habilitar el botón o lanzar la vista del examen
+                btnPresentarExamen.setDisable(false);
+            } else {
+                mostrarAlerta(Alert.AlertType.WARNING, "Acceso denegado", "Este examen solo se puede presentar entre " + horas[0] + " y " + horas[1] + " del " + examenSeleccionado.getFechaExamen());
+                btnPresentarExamen.setDisable(true);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarAlerta(Alert.AlertType.ERROR, "Error", "No se pudo procesar la fecha u hora del examen.");
+        }
+    }
+
+
+    private void mostrarAlerta(Alert.AlertType tipo, String titulo, String mensaje) {
+        Alert alert = new Alert(tipo);
+        alert.setTitle(titulo);
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
+    }
+
+    private Node construirVistaPregunta(PreguntaDto pregunta) {
+        List<OpcionDto> opciones = null;
+
+
+        if (pregunta.getIdTipoPregunta() == 1 || pregunta.getIdTipoPregunta() == 2 || pregunta.getIdTipoPregunta() == 3){
+            opciones = estudianteDashboardController.obtenerOpcionesPorPregunta(pregunta.getIdPregunta());
+        }
+
+        return switch (pregunta.getIdTipoPregunta()) {
+            case 1 -> crearVistaSeleccionUnica(pregunta, opciones);
+            case 2 -> crearVistaSeleccionMultiple(pregunta, opciones);
+            case 3 -> crearVistaVerdaderoFalso(pregunta, opciones);
+            case 4 -> crearVistaOrdenarConceptos(pregunta);
+            case 5 -> crearVistaEmparejarConceptos(pregunta);
+            case 6 -> crearVistaCompletarEspacios(pregunta);
+            default -> new Label("Tipo de pregunta no soportado");
+        };
+    }
+
+    private Node crearVistaCompletarEspacios(PreguntaDto pregunta) {
+        // 1) Recuperar la única OpcionConcepto
+        ConceptoDto opcionConcepto = estudianteDashboardController
+                .obtenerConceptosPorPregunta(pregunta.getIdPregunta())
+                .get(0);
+        String plantilla = opcionConcepto.getTextoConcepto();
+        // términos separados por ';'
+        String[] terminos = opcionConcepto.getTextoParejaConcepto().split(";");
+
+        // 2) Contenedor principal
+        VBox contenedor = crearContenedorPregunta(pregunta.getPregunta());
+        contenedor.setSpacing(15);
+
+        // 3) Preparar TextFlow
+        TextFlow flujo = new TextFlow();
+        flujo.setLineSpacing(5);
+        flujo.setPadding(new Insets(5));
+
+        // 4) Construir comboboxes diná­micamente
+        Pattern huecoPattern = Pattern.compile("_{2,}");
+        Matcher matcher     = huecoPattern.matcher(plantilla);
+
+        int ultimo   = 0;
+        int idxHueco = 0;
+
+        // Guardamos todos los combos en una lista para gestionar sus items
+        List<ComboBox<String>> combos = new ArrayList<>();
+
+        while (matcher.find() && idxHueco < terminos.length) {
+            // a) texto previo al hueco
+            flujo.getChildren().add(new Text(plantilla.substring(ultimo, matcher.start())));
+
+            // b) calcular ancho basado en longitud máxima de TODOS los términos
+            int maxLen = Arrays.stream(terminos)
+                    .mapToInt(String::length)
+                    .max().orElse(5);
+            double ancho = maxLen * 20;  // 10px por carácter
+
+            // c) crear ComboBox vacío inicialmente
+            ComboBox<String> combo = new ComboBox<>();
+            combo.setId("comboHueco" + idxHueco);
+            combo.setPromptText("Selecciona…");
+            combo.setPrefWidth(ancho);
+
+            // empezar con **todas** las opciones disponibles
+            combo.getItems().addAll(terminos);
+
+            // d) añadir a la lista para control mutuo
+            combos.add(combo);
+            flujo.getChildren().add(combo);
+
+            ultimo   = matcher.end();
+            idxHueco++;
+        }
+
+        // e) texto tras el último hueco
+        flujo.getChildren().add(new Text(plantilla.substring(ultimo)));
+        contenedor.getChildren().add(flujo);
+
+        // 5) Listener para cada combo: al seleccionar, eliminamos el término de los siguientes,
+        //    y al cambiar, reincorporamos el anterior en los demás.
+        for (int i = 0; i < combos.size(); i++) {
+            ComboBox<String> combo = combos.get(i);
+            combo.valueProperty().addListener((obs, viejo, nuevo) -> {
+                // si había una selección anterior, la devolvemos a todos los combos
+                if (viejo != null) {
+                    for (ComboBox<String> c : combos) {
+                        if (c != combo && !c.getItems().contains(viejo)) {
+                            c.getItems().add(viejo);
+                        }
+                    }
+                }
+                // quitar la selección actual de todos los combos excepto éste
+                if (nuevo != null) {
+                    for (ComboBox<String> c : combos) {
+                        if (c != combo) {
+                            c.getItems().remove(nuevo);
+                        }
+                    }
+                }
+            });
+        }
+
+        return contenedor;
+    }
+
+
+
+    private Node crearVistaOrdenarConceptos(PreguntaDto pregunta) {
+        // 1) Contenedor principal con el texto de la pregunta
+        VBox contenedor = crearContenedorPregunta(pregunta.getPregunta());
+        contenedor.setSpacing(15);
+
+        // 2) Recuperar la única OpcionConcepto y partir en ítems
+        ConceptoDto opcionConcepto = estudianteDashboardController
+                .obtenerConceptosPorPregunta(pregunta.getIdPregunta()).get(0);
+        List<String> pasos = new ArrayList<>(List.of(opcionConcepto.getTextoConcepto().split("\\s*;\\s*")));
+
+        // 3) Mezclar el orden para que no salga ya ordenado
+        Collections.shuffle(pasos);
+
+        // 4) VBox que contendrá cada paso en un HBox con controles
+        VBox lista = new VBox(8);
+
+        // 5) Creamos un Runnable auto-referenciado para (re)construir la lista
+        Runnable rebuild = new Runnable() {
+            @Override
+            public void run() {
+                lista.getChildren().clear();
+                for (int i = 0; i < pasos.size(); i++) {
+                    String texto = pasos.get(i);
+                    HBox row = new HBox(10);
+                    row.setAlignment(Pos.CENTER_LEFT);
+
+                    Label lbl = new Label((i + 1) + ". " + texto);
+                    lbl.setWrapText(true);
+                    lbl.setMaxWidth(400);
+
+                    Button up   = new Button("↑");
+                    Button down = new Button("↓");
+
+                    final int pos = i;
+                    up.setOnAction(e -> {
+                        if (pos > 0) {
+                            Collections.swap(pasos, pos, pos - 1);
+                            this.run();    // aquí llamo de nuevo al rebuild
+                        }
+                    });
+                    down.setOnAction(e -> {
+                        if (pos < pasos.size() - 1) {
+                            Collections.swap(pasos, pos, pos + 1);
+                            this.run();    // y aquí también
+                        }
+                    });
+
+                    // Desactivar cuando no procede
+                    up.setDisable(i == 0);
+                    down.setDisable(i == pasos.size() - 1);
+
+                    row.getChildren().addAll(lbl, up, down);
+                    lista.getChildren().add(row);
+                }
+            }
+        };
+
+        // 6) Construir inicialmente
+        rebuild.run();
+
+        // 7) Meter en un ScrollPane por si excede
+        ScrollPane scroll = new ScrollPane(lista);
+        scroll.setFitToWidth(true);
+        scroll.setPrefViewportHeight(200);
+
+        contenedor.getChildren().add(scroll);
+        return contenedor;
+    }
+
+
+
+    private Node crearVistaEmparejarConceptos(PreguntaDto pregunta) {
+        // --- 1) Contenedor y datos ---
+        VBox contenedor = crearContenedorPregunta(pregunta.getPregunta());
+        List<ConceptoDto> conceptos = estudianteDashboardController.obtenerConceptosPorPregunta(pregunta.getIdPregunta());
+
+        // --- 2) Grid destino (4×2) ---
+        GridPane gridDestino = new GridPane();
+        gridDestino.setHgap(20); gridDestino.setVgap(15);
+        gridDestino.setPrefWidth(600);
+        gridDestino.getColumnConstraints().addAll(
+                new ColumnConstraints(250), new ColumnConstraints(250)
+        );
+        Set<StackPane> allSlots = new HashSet<>();
+        Map<StackPane, StackPane> ocupado = new HashMap<>();
+
+        for (int i = 0; i < conceptos.size(); i++) {
+            // Columna A: textoConcepto
+            Label lblA = new Label(conceptos.get(i).getTextoConcepto());
+            lblA.setWrapText(true);
+            lblA.setStyle("-fx-font-size:13; -fx-font-weight:bold;");
+            gridDestino.add(lblA, 0, i);
+
+            // Columna B: slot vacío
+            StackPane slot = new StackPane();
+            slot.setPrefSize(200, 40);
+            slot.setStyle("-fx-border-color:#aaa; -fx-background-color:#fff;");
+            gridDestino.add(slot, 1, i);
+            allSlots.add(slot);
+        }
+
+        // --- 3) Grid origen (4×1 tarjetas) ---
+        GridPane gridOrigen = new GridPane();
+        gridOrigen.setHgap(10); gridOrigen.setVgap(10);
+        gridOrigen.setPadding(new Insets(20,0,0,0));
+
+        // Guardamos índice original de cada tarjeta
+        Map<StackPane, Pair<Integer,Integer>> originalIndex = new HashMap<>();
+        AtomicReference<StackPane> picked = new AtomicReference<>();
+
+        for (int i = 0; i < conceptos.size(); i++) {
+            ConceptoDto dto = conceptos.get(i);
+            StackPane card = new StackPane(new Label(dto.getTextoParejaConcepto()));
+            card.setStyle("-fx-border-color:#333; -fx-background-color:#e0e0e0; -fx-padding:8;");
+            gridOrigen.add(card, i % 4, i / 4);
+            originalIndex.put(card, new Pair<>(i % 4, i / 4));
+
+            // click sobre tarjeta
+            card.addEventFilter(MouseEvent.MOUSE_CLICKED, ev -> {
+                if (picked.get() == card) {
+                    // segunda vez: desmarcar y devolver origen
+                    unpickCard(card, picked, gridOrigen, originalIndex.get(card));
+                } else {
+                    // si otra estaba pickeada, devuelve esa primero
+                    if (picked.get() != null) {
+                        unpickCard(picked.get(), picked, gridOrigen, originalIndex.get(picked.get()));
+                    }
+                    pickCard(card, allSlots, ocupado, gridOrigen, picked);
+                }
+                ev.consume();
+            });
+        }
+
+        // --- 4) click sobre destino o fuera ---
+        contenedor.addEventFilter(MouseEvent.MOUSE_CLICKED, ev -> {
+            Node tgt = ev.getPickResult().getIntersectedNode();
+            // ¿es slot?
+            StackPane slot = null;
+            if (tgt instanceof StackPane sp && allSlots.contains(sp)) {
+                slot = sp;
+            } else if (tgt.getParent() instanceof StackPane sp2 && allSlots.contains(sp2)) {
+                slot = sp2;
+            }
+            if (slot != null && picked.get() != null) {
+                // colocar tarjeta pickeada en el slot
+                StackPane card = picked.get();
+                // expulsar previa
+                if (ocupado.containsKey(slot)) {
+                    StackPane prev = ocupado.remove(slot);
+                    unpickCard(prev, new AtomicReference<>(prev), gridOrigen, originalIndex.get(prev));
+                }
+                slot.getChildren().add(card);
+                ocupado.put(slot, card);
+                picked.set(null);
+                card.setStyle(card.getStyle().replace("-fx-border-color:red;", ""));
+            } else if (picked.get() != null) {
+                // clic fuera de slot: devolver tarjeta pickeada
+                StackPane card = picked.get();
+                unpickCard(card, picked, gridOrigen, originalIndex.get(card));
+            }
+        });
+
+        contenedor.getChildren().addAll(gridDestino, gridOrigen);
+        return contenedor;
+    }
+
+    // Marca la tarjeta como “en mano”
+    private void pickCard(StackPane card,
+                          Set<StackPane> allSlots,
+                          Map<StackPane, StackPane> ocupado,
+                          GridPane origen,
+                          AtomicReference<StackPane> picked) {
+        // si venía de un slot, limpiarlo
+        Parent p = card.getParent();
+        if (p instanceof StackPane slot && allSlots.contains(slot)) {
+            slot.getChildren().clear();
+            ocupado.remove(slot);
+        }
+        // destacar
+        picked.set(card);
+        card.setStyle(card.getStyle() + "-fx-border-color:red;");
+    }
+
+    // Desmarca y devuelve al origen en la celda indicada
+    private void unpickCard(StackPane card,
+                            AtomicReference<StackPane> picked,
+                            GridPane origen,
+                            Pair<Integer,Integer> idx) {
+        picked.set(null);
+        card.setStyle(card.getStyle().replace("-fx-border-color:red;", ""));
+        origen.getChildren().remove(card);
+        origen.add(card, idx.getKey(), idx.getValue());
+    }
+
+
+
+
+
+    // Falso / Verdadero
+    private Node crearVistaVerdaderoFalso(PreguntaDto pregunta, List<OpcionDto> opciones) {
+        VBox box = crearContenedorPregunta(opciones.get(0).getTextoOpcion());
+
+        ToggleGroup grupo = new ToggleGroup();
+        RadioButton rbV = new RadioButton("Verdadero");
+        RadioButton rbF = new RadioButton("Falso");
+        rbV.setToggleGroup(grupo);
+        rbF.setToggleGroup(grupo);
+
+        box.getChildren().addAll(rbV, rbF);
+        return box;
+    }
+
+    // Selección Única
+    private Node crearVistaSeleccionUnica(PreguntaDto pregunta, List<OpcionDto> opciones) {
+        VBox box = crearContenedorPregunta(pregunta.getPregunta());
+
+        ToggleGroup grupo = new ToggleGroup();
+        for (OpcionDto opcion : opciones) {
+            RadioButton rb = new RadioButton(opcion.getTextoOpcion());
+            rb.setToggleGroup(grupo);
+            rb.setUserData(opcion);
+            box.getChildren().add(rb);
+        }
+        return box;
+    }
+
+    // Selección Múltiple (usa CheckBox para permitir varias)
+    private Node crearVistaSeleccionMultiple(PreguntaDto pregunta, List<OpcionDto> opciones) {
+        VBox box = crearContenedorPregunta(pregunta.getPregunta());
+
+        for (OpcionDto opcion : opciones) {
+            CheckBox cb = new CheckBox(opcion.getTextoOpcion());
+            cb.setUserData(opcion);
+            box.getChildren().add(cb);
+        }
+        return box;
+    }
+
+    private VBox crearContenedorPregunta(String textoPregunta) {
+        VBox box = new VBox(8);
+        box.setPadding(new Insets(15));
+        box.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #ddd; " +
+                "-fx-border-radius: 5; -fx-background-radius: 5;");
+        Label lbl = new Label(textoPregunta);
+        lbl.setWrapText(true);
+        lbl.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        box.getChildren().add(lbl);
+        return box;
     }
 
 }

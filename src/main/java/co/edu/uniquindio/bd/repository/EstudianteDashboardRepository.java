@@ -1,10 +1,12 @@
 package co.edu.uniquindio.bd.repository;
 
-import co.edu.uniquindio.bd.dto.CursoEstudianteDTO;
-import co.edu.uniquindio.bd.dto.ExamenDto;
-import co.edu.uniquindio.bd.dto.TemaDTO;
+import co.edu.uniquindio.bd.dto.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.ParameterMode;
+
+import java.io.Reader;
+import java.math.BigDecimal;
+import java.sql.Clob;
 import java.sql.Timestamp;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.StoredProcedureQuery;
@@ -27,7 +29,7 @@ public class EstudianteDashboardRepository {
      * @param idEstudiante The student ID
      * @return A list of CursoEstudianteDTO objects representing the student's courses
      */
-    public List<CursoEstudianteDTO> obtenerCursosEstudiante(Integer idEstudiante) {
+    public List<CursoEstudianteDto> obtenerCursosEstudiante(Integer idEstudiante) {
         StoredProcedureQuery sp = em.createStoredProcedureQuery("obtener_cursos_estudiante");
 
         // Register parameters
@@ -41,11 +43,11 @@ public class EstudianteDashboardRepository {
         sp.execute();
 
         // Process the results
-        List<CursoEstudianteDTO> cursos = new ArrayList<>();
+        List<CursoEstudianteDto> cursos = new ArrayList<>();
         List<Object[]> resultList = sp.getResultList();
 
         for (Object[] row : resultList) {
-            CursoEstudianteDTO curso = new CursoEstudianteDTO();
+            CursoEstudianteDto curso = new CursoEstudianteDto();
             curso.setIdCurso((Integer) row[0]);
             curso.setNombreCurso((String) row[1]);
             curso.setNombreProfesor((String) row[2]);
@@ -56,7 +58,7 @@ public class EstudianteDashboardRepository {
         return cursos;
     }
 
-    public List<TemaDTO> obtenerTemasPorCurso(Integer idCurso) {
+    public List<TemaDto> obtenerTemasPorCurso(Integer idCurso) {
         StoredProcedureQuery sp = em.createStoredProcedureQuery("obtener_temas_por_curso");
 
         // Register parameters
@@ -70,11 +72,11 @@ public class EstudianteDashboardRepository {
         sp.execute();
 
         // Process the results
-        List<TemaDTO> temas = new ArrayList<>();
+        List<TemaDto> temas = new ArrayList<>();
         List<Object[]> resultList = sp.getResultList();
 
         for (Object[] row : resultList) {
-            TemaDTO tema = new TemaDTO();
+            TemaDto tema = new TemaDto();
             tema.setIdTema((Integer) row[0]);
             tema.setNombre((String) row[1]);
             tema.setUnidad((String) row[2]);
@@ -128,5 +130,108 @@ public class EstudianteDashboardRepository {
         }
 
         return examenes;
+    }
+
+    public List<PreguntaDto> obtenerPreguntasExamen(Integer idExamen) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("obtener_preguntas_examen");
+
+        // Register parameters
+        sp.registerStoredProcedureParameter("p_idexamen", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_cursor", void.class, ParameterMode.REF_CURSOR);
+
+        // Set input parameter
+        sp.setParameter("p_idexamen", idExamen);
+
+        // Execute the stored procedure
+        sp.execute();
+
+        // Process the results
+        List<PreguntaDto> preguntas = new ArrayList<>();
+        List<Object[]> resultList = sp.getResultList();
+
+        for (Object[] row : resultList) {
+            PreguntaDto pregunta = new PreguntaDto();
+            pregunta.setIdPregunta((Integer) row[0]);
+            pregunta.setPregunta(clobToString((Clob) row[1]));
+            pregunta.setPorcentaje(((BigDecimal) row[2]).intValue());
+            pregunta.setIdTipoPregunta((Integer) row[3]);
+            pregunta.setIdExamen((Integer) row[4]);
+            preguntas.add(pregunta);
+        }
+
+        return preguntas;
+    }
+
+    public static String clobToString(Clob clob) {
+        if (clob == null) return null;
+        StringBuilder sb = new StringBuilder();
+        try (Reader reader = clob.getCharacterStream()) {
+            char[] buffer = new char[2048];
+            int bytesRead;
+            while ((bytesRead = reader.read(buffer)) != -1) {
+                sb.append(buffer, 0, bytesRead);
+            }
+        } catch (Exception e) {
+            e.printStackTrace(); // o lanza una RuntimeException
+        }
+        return sb.toString();
+    }
+
+
+    public List<OpcionDto> obtenerOpcionesPorPregunta(Integer idPregunta) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("obtener_opciones_por_pregunta");
+
+        // Register parameters
+        sp.registerStoredProcedureParameter("p_idpregunta", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_cursor", void.class, ParameterMode.REF_CURSOR);
+
+        // Set input parameter
+        sp.setParameter("p_idpregunta", idPregunta);
+
+        // Execute the stored procedure
+        sp.execute();
+
+        // Process the results
+        List<OpcionDto> opciones = new ArrayList<>();
+        List<Object[]> resultList = sp.getResultList();
+
+        for (Object[] row : resultList) {
+            OpcionDto opcion = new OpcionDto();
+            opcion.setIdOpcionSeleccion((Integer) row[0]);
+            opcion.setTextoOpcion(clobToString((Clob) row[1]));
+            opcion.setEscorrecta(((Number) row[2]).intValue());
+            opciones.add(opcion);
+        }
+
+        return opciones;
+    }
+
+    public List<ConceptoDto> obtenerConceptosPorPregunta(Integer idPregunta) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("obtener_conceptos_por_pregunta");
+
+        // Register parameters
+        sp.registerStoredProcedureParameter("p_idpregunta", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_cursor", void.class, ParameterMode.REF_CURSOR);
+
+        // Set input parameter
+        sp.setParameter("p_idpregunta", idPregunta);
+
+        // Execute the stored procedure
+        sp.execute();
+
+        // Process the results
+        List<ConceptoDto> conceptos = new ArrayList<>();
+        List<Object[]> resultList = sp.getResultList();
+
+        for (Object[] row : resultList) {
+            ConceptoDto concepto = new ConceptoDto();
+            concepto.setIdConcepto((Integer) row[0]);
+            concepto.setTextoConcepto(clobToString((Clob) row[1]));
+            concepto.setTextoParejaConcepto(clobToString((Clob) row[2]));
+            concepto.setIdPregunta((Integer) row[3]);
+            conceptos.add(concepto);
+        }
+
+        return conceptos;
     }
 }
