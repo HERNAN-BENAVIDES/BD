@@ -14,7 +14,7 @@ public class ExamenDto {
     private String nombreExamen;
     private String horaExamen;
     private String fechaExamen;
-    private String duracionExamen;
+    private Integer duracionExamen;
     private Integer preguntasExamen;
     private String temaExamen;
     private String grupoExamen;

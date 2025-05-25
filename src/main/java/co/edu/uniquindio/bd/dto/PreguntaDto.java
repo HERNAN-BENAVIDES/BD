@@ -14,6 +14,7 @@ public class PreguntaDto {
     @Id
     private Integer idPregunta;
     private String pregunta;
+    private Integer tiempo;
     private int porcentaje;
     private Integer idTipoPregunta;
     private Integer idExamen;

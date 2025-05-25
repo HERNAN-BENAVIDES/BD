@@ -2,25 +2,27 @@ package co.edu.uniquindio.bd.viewController;
 
 import co.edu.uniquindio.bd.controller.EstudianteDashboardController;
 import co.edu.uniquindio.bd.dto.*;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
-import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import javafx.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,6 +36,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,6 +67,8 @@ public class EstudianteDashboardViewController implements Initializable {
 
     @FXML
     private Label studentEmailLabel;
+
+    private Button btnSiguiente;
 
     @FXML
     private TableView<CursoEstudianteDto> coursesTableView;
@@ -135,6 +140,10 @@ public class EstudianteDashboardViewController implements Initializable {
     private Button logoutButton;
 
     private EstudianteDto estudiante;
+    
+    private Timeline examTimeline;
+    
+    private Timeline questionTimeline;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -238,7 +247,16 @@ public class EstudianteDashboardViewController implements Initializable {
 
     @FXML
     public void handlePresentarExamen(ActionEvent event) {
-        // 1. Recuperar preguntas
+
+        // 1. Registrar el examen presentado
+        Integer idPresentado = estudianteDashboardController.crearExamenPresentado(
+                examenesTableView.getSelectionModel().getSelectedItem().getIdExamen(),
+                estudiante.getIdestudiante(),
+                "127.0.0.1" // Reemplaza por la IP real si la tienes
+        );
+
+
+        // 2. Recuperar preguntas
         List<PreguntaDto> preguntas = estudianteDashboardController
                 .obtenerPreguntasExamen(examenesTableView.getSelectionModel().getSelectedItem().getIdExamen());
         if (preguntas.isEmpty()) {
@@ -246,13 +264,13 @@ public class EstudianteDashboardViewController implements Initializable {
             return;
         }
 
-        // 2. Crear y configurar el Tab de examen
+        // 3. Crear y configurar el Tab de examen
         Tab tabExamen = crearTabExamen();
 
-        // 3. Crear el contenedor principal dentro del Tab
+        // 4. Crear el contenedor principal dentro del Tab
         VBox contenido = crearContenedorExamen(tabExamen);
 
-        // 4. Añadir la primera pregunta y el botón "Siguiente"
+        // 5. Añadir la primera pregunta y el botón "Siguiente"
         iniciarNavegacionPreguntas(contenido, preguntas, tabExamen);
     }
 
@@ -279,37 +297,146 @@ public class EstudianteDashboardViewController implements Initializable {
     }
 
     private void iniciarNavegacionPreguntas(VBox contenido, List<PreguntaDto> preguntas, Tab tabExamen) {
-
         AtomicInteger indice = new AtomicInteger(0);
 
-        // 4.1 Mostrar primera pregunta
-        Node vistaInicial = construirVistaPregunta(preguntas.get(0));
-        contenido.getChildren().add(vistaInicial);
+        // Label del temporizador de examen
+        Label examenLabel = new Label();
+        examenLabel.setStyle("-fx-font-size: 16px; -fx-font-weight:bold;");
+        contenido.getChildren().add(examenLabel);
 
-        // 4.2 Crear botón Siguiente
-        Button btnSiguiente = new Button("Siguiente");
+        // Label del temporizador pregunta
+        Label timerLabel = new Label();
+        timerLabel.setStyle("-fx-font-size: 16px; -fx-font-weight:bold;");
+        contenido.getChildren().add(timerLabel);
+
+        // Label de progreso
+        Label progresoLabel = new Label();
+        progresoLabel.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+        contenido.getChildren().add(progresoLabel);
+
+        // Vista inicial de la pregunta
+        contenido.getChildren().add(new Label()); // Placeholder, será reemplazado
+
+        // Botón Siguiente
+        btnSiguiente = new Button("Siguiente");
         HBox hBoxBtn = new HBox(btnSiguiente);
         hBoxBtn.setAlignment(Pos.CENTER_RIGHT);
         contenido.getChildren().add(hBoxBtn);
 
-        // 4.3 Lógica de avance
+        // 1) Arrancar temporizador de examen (solo finaliza el examen, NO dispara siguiente)
+        int durExamen = examenesTableView.getSelectionModel().getSelectedItem().getDuracionExamen() * 60;
+        examTimeline = startTimer(
+                durExamen,
+                examenLabel,
+                "Tiempo restante examen",
+                this::formatHHMMSS,
+                () -> {
+                    examTimeline.stop();
+                    Alert a = new Alert(Alert.AlertType.INFORMATION, "Se acabó el tiempo del examen");
+                    a.showAndWait();
+                    terminarExamen(tabExamen);
+                }
+        );
+
+        // 2) Función para mostrar cada pregunta y reiniciar su temporizador
+        Consumer<Integer> mostrarPregunta = idx -> {
+            // detener el viejo timeline de pregunta (si existía)
+            if (questionTimeline != null) questionTimeline.stop();
+
+            progresoLabel.setText("Pregunta " + (idx + 1) + " de " + preguntas.size());
+            contenido.getChildren().set(3, construirVistaPregunta(preguntas.get(idx)));
+
+            // arrancar nuevo timeline de pregunta (este SÍ dispara siguiente)
+            questionTimeline = startTimer(
+                    preguntas.get(idx).getTiempo(),
+                    timerLabel,
+                    "Tiempo restante pregunta",
+                    this::formatMMSS,
+                    btnSiguiente::fire
+            );
+        };
+
+        // 3) Mostrar la primera
+        mostrarPregunta.accept(0);
+
         btnSiguiente.setOnAction(e -> {
             int i = indice.incrementAndGet();
             if (i < preguntas.size()) {
-                // reemplazar la vista de la pregunta
-                contenido.getChildren().set(0, construirVistaPregunta(preguntas.get(i)));
-                // si es la última, cambias el texto
-                if (i == preguntas.size() - 1) {
-                    btnSiguiente.setText("Finalizar");
-                }
+                mostrarPregunta.accept(i);
+                if (i == preguntas.size()-1) btnSiguiente.setText("Finalizar");
             } else {
-                // fin del examen
                 btnSiguiente.setDisable(true);
-                mostrarAlerta(Alert.AlertType.INFORMATION, "Fin de examen", "Has completado el examen. Gracias por participar.");
-                logoutButton.setDisable(false);
+                Alert alerta = new Alert(Alert.AlertType.INFORMATION);
+                alerta.setTitle("Fin de examen");
+                alerta.setHeaderText(null);
+                alerta.setContentText("Has completado el examen. Gracias por participar.");
+                alerta.showAndWait();
+                terminarExamen(tabExamen);
             }
         });
     }
+
+    private void terminarExamen(Tab tabExamen) {
+        // parar ambos timelines
+        if (examTimeline    != null) examTimeline.stop();
+        if (questionTimeline!= null) questionTimeline.stop();
+        // cerrar tab y re-habilitar logout
+        tabPane.getTabs().remove(tabExamen);
+        logoutButton.setDisable(false);
+    }
+
+
+    /** Formatea a mm:ss */
+    private String formatMMSS(int totalSegundos) {
+        int minutos = totalSegundos / 60;
+        int segundos = totalSegundos % 60;
+        return String.format("%02d:%02d", minutos, segundos);
+    }
+
+    /** Formatea a HH:mm:ss */
+    private String formatHHMMSS(int totalSegundos) {
+        int horas = totalSegundos / 3600;
+        int minutos = (totalSegundos % 3600) / 60;
+        int segundos = totalSegundos % 60;
+        return String.format("%02d:%02d:%02d", horas, minutos, segundos);
+    }
+
+
+    // Modificamos startTimer para que DEVUELVA el Timeline
+    private Timeline startTimer(
+            int totalSeconds,
+            Label tiempoLabel,
+            String labelPrefix,
+            Function<Integer, String> timeFormatter,
+            Runnable onFinished
+    ) {
+        IntegerProperty remaining = new SimpleIntegerProperty(totalSeconds);
+        tiempoLabel.textProperty().bind(
+                Bindings.createStringBinding(
+                        () -> labelPrefix + ": " + timeFormatter.apply(remaining.get()),
+                        remaining
+                )
+        );
+
+        Timeline timeline = new Timeline();
+        KeyFrame kf = new KeyFrame(Duration.seconds(1), evt -> {
+            int secs = remaining.get() - 1;
+            remaining.set(secs);
+            if (secs <= 0) {
+                timeline.stop();
+                onFinished.run();
+            }
+        });
+        timeline.getKeyFrames().add(kf);
+        timeline.setCycleCount(totalSeconds);
+        timeline.play();
+
+        return timeline;
+    }
+
+
+
+
 
 
     private void obtenerTemasCursoSeleccionado() {
@@ -368,7 +495,9 @@ public class EstudianteDashboardViewController implements Initializable {
 
 
         if (pregunta.getIdTipoPregunta() == 1 || pregunta.getIdTipoPregunta() == 2 || pregunta.getIdTipoPregunta() == 3){
+            // Selección única, múltiple o verdadero/falso, las opciones se mezclan
             opciones = estudianteDashboardController.obtenerOpcionesPorPregunta(pregunta.getIdPregunta());
+            Collections.shuffle(opciones);
         }
 
         return switch (pregunta.getIdTipoPregunta()) {
@@ -389,7 +518,11 @@ public class EstudianteDashboardViewController implements Initializable {
                 .get(0);
         String plantilla = opcionConcepto.getTextoConcepto();
         // términos separados por ';'
-        String[] terminos = opcionConcepto.getTextoParejaConcepto().split(";");
+        List<String> terminosList = new ArrayList<>(
+                Arrays.asList(opcionConcepto.getTextoParejaConcepto().split(";"))
+        );
+        Collections.shuffle(terminosList); // Mezcla los términos
+        String[] terminos = terminosList.toArray(new String[0]);
 
         // 2) Contenedor principal
         VBox contenedor = crearContenedorPregunta(pregunta.getPregunta());
@@ -410,6 +543,7 @@ public class EstudianteDashboardViewController implements Initializable {
         // Guardamos todos los combos en una lista para gestionar sus items
         List<ComboBox<String>> combos = new ArrayList<>();
 
+
         while (matcher.find() && idxHueco < terminos.length) {
             // a) texto previo al hueco
             flujo.getChildren().add(new Text(plantilla.substring(ultimo, matcher.start())));
@@ -425,9 +559,10 @@ public class EstudianteDashboardViewController implements Initializable {
             combo.setId("comboHueco" + idxHueco);
             combo.setPromptText("Selecciona…");
             combo.setPrefWidth(ancho);
-
-            // empezar con **todas** las opciones disponibles
+            combo.getItems().add("— Ninguno —");
             combo.getItems().addAll(terminos);
+            combo.setValue("— Ninguno —");  // valor inicial
+
 
             // d) añadir a la lista para control mutuo
             combos.add(combo);
@@ -446,15 +581,25 @@ public class EstudianteDashboardViewController implements Initializable {
         for (int i = 0; i < combos.size(); i++) {
             ComboBox<String> combo = combos.get(i);
             combo.valueProperty().addListener((obs, viejo, nuevo) -> {
-                // si había una selección anterior, la devolvemos a todos los combos
+                // Si no seleccionó nada útil, salir
+                if ("— Ninguno —".equals(nuevo)) {
+                    nuevo = null;
+                }
+                if ("— Ninguno —".equals(viejo)) {
+                    viejo = null;
+                }
+
+                // Reincorporar el valor anterior en los demás combos
                 if (viejo != null) {
                     for (ComboBox<String> c : combos) {
                         if (c != combo && !c.getItems().contains(viejo)) {
                             c.getItems().add(viejo);
+                            FXCollections.sort(c.getItems()); // opcional: mantener orden
                         }
                     }
                 }
-                // quitar la selección actual de todos los combos excepto éste
+
+                // Eliminar la nueva selección en otros combos
                 if (nuevo != null) {
                     for (ComboBox<String> c : combos) {
                         if (c != combo) {
@@ -463,6 +608,7 @@ public class EstudianteDashboardViewController implements Initializable {
                     }
                 }
             });
+
         }
 
         return contenedor;
@@ -579,6 +725,8 @@ public class EstudianteDashboardViewController implements Initializable {
         // Guardamos índice original de cada tarjeta
         Map<StackPane, Pair<Integer,Integer>> originalIndex = new HashMap<>();
         AtomicReference<StackPane> picked = new AtomicReference<>();
+
+        Collections.shuffle(conceptos);
 
         for (int i = 0; i < conceptos.size(); i++) {
             ConceptoDto dto = conceptos.get(i);

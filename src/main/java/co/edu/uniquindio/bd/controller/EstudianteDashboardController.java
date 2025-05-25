@@ -42,4 +42,8 @@ public class EstudianteDashboardController {
     public List<ConceptoDto> obtenerConceptosPorPregunta(Integer idPregunta) {
         return estudianteDashboardService.obtenerConceptosPorPregunta(idPregunta);
     }
+
+    public Integer crearExamenPresentado(Integer idExamen, int idestudiante, String ip) {
+        return estudianteDashboardService.crearExamenPresentado(idExamen, idestudiante, ip);
+    }
 }

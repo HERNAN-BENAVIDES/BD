@@ -121,7 +121,7 @@ public class EstudianteDashboardRepository {
             examen.setHoraExamen(horaInicio + " - " + horaFin);
             examen.setFechaExamen(fecha);
 
-            examen.setDuracionExamen(String.valueOf(java.time.Duration.between(inicio.toLocalDateTime(), fin.toLocalDateTime()).toMinutes()));
+            examen.setDuracionExamen(((Integer) row[4]));
             examen.setPreguntasExamen((Integer) row[5]);
             examen.setTemaExamen((String) row[6]);
             examen.setGrupoExamen(((String) row[7]));
@@ -153,9 +153,10 @@ public class EstudianteDashboardRepository {
             PreguntaDto pregunta = new PreguntaDto();
             pregunta.setIdPregunta((Integer) row[0]);
             pregunta.setPregunta(clobToString((Clob) row[1]));
-            pregunta.setPorcentaje(((BigDecimal) row[2]).intValue());
-            pregunta.setIdTipoPregunta((Integer) row[3]);
-            pregunta.setIdExamen((Integer) row[4]);
+            pregunta.setTiempo((Integer) row[2]);
+            pregunta.setPorcentaje(((BigDecimal) row[3]).intValue());
+            pregunta.setIdTipoPregunta((Integer) row[4]);
+            pregunta.setIdExamen((Integer) row[5]);
             preguntas.add(pregunta);
         }
 
@@ -233,5 +234,31 @@ public class EstudianteDashboardRepository {
         }
 
         return conceptos;
+    }
+
+    public Integer crearExamenPresentado(Integer idExamen, Integer idEstudiante, String ipDireccion) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("CREAR_EXAMENPRESENTADO");
+        sp.registerStoredProcedureParameter("p_idExamen", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_idEstudiante", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_ipDireccion", String.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_idPresentado", Integer.class, ParameterMode.OUT);
+
+        sp.setParameter("p_idExamen", idExamen);
+        sp.setParameter("p_idEstudiante", idEstudiante);
+        sp.setParameter("p_ipDireccion", ipDireccion);
+
+        sp.execute();
+        return (Integer) sp.getOutputParameterValue("p_idPresentado");
+    }
+
+
+    public Double obtenerNotaExamen(Integer idPresentado) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("OBTENER_NOTA_EXAMEN");
+        sp.registerStoredProcedureParameter("p_idPresentado", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_nota", Double.class, ParameterMode.OUT);
+
+        sp.setParameter("p_idPresentado", idPresentado);
+        sp.execute();
+        return (Double) sp.getOutputParameterValue("p_nota");
     }
 }
