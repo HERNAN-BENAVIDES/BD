@@ -70,4 +70,8 @@ public class EstudianteDashboardService {
     public void registrarRespuestaVF(int idExamPres, Integer idPregunta, int flag) {
         estudianteDashboardRepository.registrarRespuestaVF(idExamPres,idPregunta,flag);
     }
+
+    public void registrarRespuestaMultiple(int idExamPres, int idExamenPregunta, String todas) {
+        estudianteDashboardRepository.registrarRespuestaMultiple(idExamPres, idExamenPregunta, todas);
+    }
 }

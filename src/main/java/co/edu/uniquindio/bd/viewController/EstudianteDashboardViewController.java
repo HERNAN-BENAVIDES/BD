@@ -406,22 +406,24 @@ public class EstudianteDashboardViewController implements Initializable {
                 break;
 
 
-            case 2:  // múltiple
+            case 2:  // selección múltiple
                 // 1) Recolectar todos los CheckBoxes marcados
                 List<String> seleccionadas = ((VBox) vista).getChildren().stream()
                         .filter(n -> n instanceof CheckBox)
                         .map(n -> (CheckBox) n)
                         .filter(CheckBox::isSelected)
-                        .map(CheckBox::getText)
+                        .map(cb -> ((OpcionDto) cb.getUserData()).getTextoOpcion().trim())
                         .collect(Collectors.toList());
 
                 if (!seleccionadas.isEmpty()) {
-                    // 2) Unir con ';'
+                    // 1) Únelas con ';' SIN espacios
                     String todas = String.join(";", seleccionadas);
-                    // 3) Llamar una sola vez pasándole la lista
+                    // 2) Llama al SP
+                    System.out.println(todas);
                     estudianteDashboardController
-                            .registrarRespuestaSeleccionMultiple(idExamPres, idExamenPregunta, todas);
+                            .registrarRespuestaMultiple(idExamPres, idExamenPregunta, todas);
                 }
+
                 break;
 
 

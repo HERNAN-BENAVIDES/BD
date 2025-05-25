@@ -61,14 +61,15 @@ public class EstudianteDashboardController {
         estudianteDashboardService.registrarRespuestaSeleccionUnica(idExamPres, idExamenPregunta, texto);
     }
 
-    public void registrarRespuestaSeleccionMultiple(int idExamPres, int idExamenPregunta, String todas) {
-    }
-
     public BigDecimal finalizarExamen(Integer idPresentado) {
         return estudianteDashboardService.finalizarExamen(idPresentado);
     }
 
     public void registrarRespuestaVF(int idExamPres, Integer idPregunta, int flag) {
         estudianteDashboardService.registrarRespuestaVF(idExamPres,idPregunta,flag);
+    }
+
+    public void registrarRespuestaMultiple(int idExamPres, int idExamenPregunta, String todas) {
+        estudianteDashboardService.registrarRespuestaMultiple(idExamPres, idExamenPregunta, todas);
     }
 }

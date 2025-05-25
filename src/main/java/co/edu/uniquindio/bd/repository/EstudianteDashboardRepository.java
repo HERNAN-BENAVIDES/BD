@@ -341,4 +341,18 @@ public class EstudianteDashboardRepository {
 
         sp.execute();
     }
+
+    public void registrarRespuestaMultiple(int idExamPres, int idExamenPregunta, String todas) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("REGISTRAR_RESPUESTA_MULTIPLE");
+
+        sp.registerStoredProcedureParameter(1, Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter(2, Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter(3, String.class, ParameterMode.IN);
+
+        sp.setParameter(1,idExamPres);
+        sp.setParameter(2,idExamenPregunta);
+        sp.setParameter(3,todas);
+
+        sp.execute();
+    }
 }
