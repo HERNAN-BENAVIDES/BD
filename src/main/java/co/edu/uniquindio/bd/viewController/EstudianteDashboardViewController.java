@@ -27,6 +27,7 @@ import javafx.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,6 +40,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -145,6 +147,9 @@ public class EstudianteDashboardViewController implements Initializable {
     
     private Timeline questionTimeline;
 
+    private Integer idPresentado;
+
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         btnVerTemas.disableProperty().bind(
@@ -249,7 +254,7 @@ public class EstudianteDashboardViewController implements Initializable {
     public void handlePresentarExamen(ActionEvent event) {
 
         // 1. Registrar el examen presentado
-        Integer idPresentado = estudianteDashboardController.crearExamenPresentado(
+        idPresentado = estudianteDashboardController.crearExamenPresentado(
                 examenesTableView.getSelectionModel().getSelectedItem().getIdExamen(),
                 estudiante.getIdestudiante(),
                 "127.0.0.1" // Reemplaza por la IP real si la tienes
@@ -360,29 +365,117 @@ public class EstudianteDashboardViewController implements Initializable {
         mostrarPregunta.accept(0);
 
         btnSiguiente.setOnAction(e -> {
+
+            int actual = indice.get();
+            guardarRespuesta(idPresentado, preguntas.get(actual), contenido.getChildren().get(3));
+
             int i = indice.incrementAndGet();
             if (i < preguntas.size()) {
                 mostrarPregunta.accept(i);
                 if (i == preguntas.size()-1) btnSiguiente.setText("Finalizar");
             } else {
                 btnSiguiente.setDisable(true);
-                Alert alerta = new Alert(Alert.AlertType.INFORMATION);
-                alerta.setTitle("Fin de examen");
-                alerta.setHeaderText(null);
-                alerta.setContentText("Has completado el examen. Gracias por participar.");
-                alerta.showAndWait();
                 terminarExamen(tabExamen);
             }
         });
     }
 
+    /**
+     * Extrae la respuesta del Node (puede ser VBox, TextFlow, GridPane, etc.),
+     * detecta el tipo de pregunta y llama al SP correspondiente.
+     */
+    private void guardarRespuesta(int idExamPres, PreguntaDto pregunta, Node vista) {
+        int idExamenPregunta = estudianteDashboardController.getIdExamenPregunta(pregunta.getIdPregunta(), pregunta.getIdExamen()); // tenlo en tu DTO
+        switch (pregunta.getIdTipoPregunta()) {
+            case 1:  // única
+                // 1) Localizar ToggleGroup
+                ToggleGroup tg = ((VBox) vista).getChildren().stream()
+                        .filter(n -> n instanceof RadioButton)
+                        .map(n -> (RadioButton) n)
+                        .findFirst()
+                        .map(rb -> rb.getToggleGroup())
+                        .orElse(null);
+
+                if (tg != null && tg.getSelectedToggle() != null) {
+                    // 2) Obtener texto de la opción seleccionada
+                    String texto = ((RadioButton) tg.getSelectedToggle()).getText();
+                    // 3) Invocar el SP con una sola opción (sin ';')
+                    estudianteDashboardController
+                            .registrarRespuestaSeleccionUnica(idExamPres, idExamenPregunta, texto);
+                }
+                break;
+
+
+            case 2:  // múltiple
+                // 1) Recolectar todos los CheckBoxes marcados
+                List<String> seleccionadas = ((VBox) vista).getChildren().stream()
+                        .filter(n -> n instanceof CheckBox)
+                        .map(n -> (CheckBox) n)
+                        .filter(CheckBox::isSelected)
+                        .map(CheckBox::getText)
+                        .collect(Collectors.toList());
+
+                if (!seleccionadas.isEmpty()) {
+                    // 2) Unir con ';'
+                    String todas = String.join(";", seleccionadas);
+                    // 3) Llamar una sola vez pasándole la lista
+                    estudianteDashboardController
+                            .registrarRespuestaSeleccionMultiple(idExamPres, idExamenPregunta, todas);
+                }
+                break;
+
+
+            case 3: // V/F
+                // 1) Localiza el ToggleGroup de Verdadero/Falso
+                ToggleGroup tg1 = ((VBox) vista).getChildren().stream()
+                        .filter(n -> n instanceof RadioButton)
+                        .map(n -> (RadioButton) n)
+                        .findFirst()
+                        .map(rb -> rb.getToggleGroup())
+                        .orElse(null);
+
+                if (tg1 != null && tg1.getSelectedToggle() != null) {
+                    // 2) Determina si seleccionó Verdadero (1) o Falso (0)
+                    String texto = ((RadioButton) tg1.getSelectedToggle()).getText();
+                    int flag = "Verdadero".equalsIgnoreCase(texto) ? 1 : 0;
+
+                    // 3) Llama al SP pasándole idExamenPresentado, idPregunta y flag
+                    estudianteDashboardController
+                            .registrarRespuestaVF(idExamPres, pregunta.getIdPregunta(), flag);
+                }
+                break;
+
+            case 4: // ordenar conceptos
+
+                break;
+
+            case 5: // Ordenar Conceptos
+
+                break;
+
+            case 6: // completar espacios
+
+                break;
+        }
+    }
+
     private void terminarExamen(Tab tabExamen) {
+
+        BigDecimal nota = estudianteDashboardController.finalizarExamen(idPresentado);
+
+        Alert alerta = new Alert(Alert.AlertType.INFORMATION);
+        alerta.setTitle("Fin de examen");
+        alerta.setHeaderText(null);
+        alerta.setContentText("Has completado el examen. Gracias por participar." + "\nNota: " + nota);
+        alerta.showAndWait();
         // parar ambos timelines
         if (examTimeline    != null) examTimeline.stop();
         if (questionTimeline!= null) questionTimeline.stop();
         // cerrar tab y re-habilitar logout
         tabPane.getTabs().remove(tabExamen);
         logoutButton.setDisable(false);
+
+
     }
 
 

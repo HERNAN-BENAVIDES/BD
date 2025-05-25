@@ -5,6 +5,7 @@ import co.edu.uniquindio.bd.repository.EstudianteDashboardRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -44,5 +45,29 @@ public class EstudianteDashboardService {
 
     public Integer crearExamenPresentado(Integer idExamen, int idestudiante, String ip) {
         return estudianteDashboardRepository.crearExamenPresentado(idExamen, idestudiante, ip);
+    }
+
+    public int getIdExamenPregunta(Integer idPregunta, Integer idExamen) {
+        return estudianteDashboardRepository.getIdExamenPregunta(idPregunta, idExamen);
+    }
+
+    public void registrarRespuestaSeleccion(int idExamPres, int idExamenPregunta, String texto) {
+        estudianteDashboardRepository.registrarRespuestaSeleccion(idExamPres, idExamenPregunta, texto);
+    }
+
+    public void registrarRespuestaConcepto(int idExamPres, int idExamenPregunta, String orden) {
+        estudianteDashboardRepository.registrarRespuestaConcepto(idExamPres, idExamenPregunta, orden);
+    }
+
+    public void registrarRespuestaSeleccionUnica(int idExamPres, int idExamenPregunta, String texto) {
+        estudianteDashboardRepository.registrarRespuestaSeleccionUnica(idExamPres,idExamenPregunta,texto);
+    }
+
+    public BigDecimal finalizarExamen(Integer idPresentado) {
+        return estudianteDashboardRepository.finalizarExamen(idPresentado);
+    }
+
+    public void registrarRespuestaVF(int idExamPres, Integer idPregunta, int flag) {
+        estudianteDashboardRepository.registrarRespuestaVF(idExamPres,idPregunta,flag);
     }
 }

@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.StoredProcedureQuery;
 import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.format.DateTimeFormatter;
@@ -260,5 +261,84 @@ public class EstudianteDashboardRepository {
         sp.setParameter("p_idPresentado", idPresentado);
         sp.execute();
         return (Double) sp.getOutputParameterValue("p_nota");
+    }
+
+    public int getIdExamenPregunta(Integer idPregunta, Integer idExamen) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("OBTENER_ID_EXAMEN_PREGUNTA");
+        sp.registerStoredProcedureParameter("p_idpregunta", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_idexamen", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_idexamenpregunta", Integer.class, ParameterMode.OUT);
+
+        sp.setParameter("p_idpregunta", idPregunta);
+        sp.setParameter("p_idexamen", idExamen);
+
+        sp.execute();
+        return (Integer) sp.getOutputParameterValue("p_idexamenpregunta");
+    }
+
+    public void registrarRespuestaSeleccion(int idExamPres, int idExamenPregunta, String texto) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("REGISTRAR_RESPUESTA_SELECCION");
+        sp.registerStoredProcedureParameter("p_idExamPres", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_idExamenPregunta", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_texto", String.class, ParameterMode.IN);
+
+        sp.setParameter("p_idExamPres", idExamPres);
+        sp.setParameter("p_idExamenPregunta", idExamenPregunta);
+        sp.setParameter("p_texto", texto);
+
+        sp.execute();
+    }
+
+    public void registrarRespuestaConcepto(int idExamPres, int idExamenPregunta, String orden) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("REGISTRAR_RESPUESTA_CONCEPTO");
+        sp.registerStoredProcedureParameter("p_idExamPres", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_idExamenPregunta", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_orden", String.class, ParameterMode.IN);
+
+        sp.setParameter("p_idExamPres", idExamPres);
+        sp.setParameter("p_idExamenPregunta", idExamenPregunta);
+        sp.setParameter("p_orden", orden);
+
+        sp.execute();
+    }
+
+    public void registrarRespuestaSeleccionUnica(int idExamPres, int idExamenPregunta, String texto) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("REGISTRAR_RESPUESTA_UNICA");
+        sp.registerStoredProcedureParameter("p_idExamPres", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_idExamenPregunta", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_texto", String.class, ParameterMode.IN);
+
+        sp.setParameter("p_idExamPres", idExamPres);
+        sp.setParameter("p_idExamenPregunta", idExamenPregunta);
+        sp.setParameter("p_texto", texto);
+
+        sp.execute();
+    }
+
+    public BigDecimal finalizarExamen(Integer idPresentado) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("PKG_EXAMEN.FINALIZAR_EXAMEN");
+
+        sp.registerStoredProcedureParameter("p_idExamPres", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_nota", BigDecimal.class, ParameterMode.OUT);
+
+        sp.setParameter("p_idExamPres", idPresentado);
+
+        sp.execute();
+
+        return (BigDecimal) sp.getOutputParameterValue("p_nota");
+    }
+
+    public void registrarRespuestaVF(int idExamPres, Integer idPregunta, int flag) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("REGISTRAR_RESPUESTA_VF");
+
+        sp.registerStoredProcedureParameter(1,Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter(2,Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter(3,Integer.class, ParameterMode.IN);
+
+        sp.setParameter(1,idExamPres);
+        sp.setParameter(2,idPregunta);
+        sp.setParameter(3,flag);
+
+        sp.execute();
     }
 }
