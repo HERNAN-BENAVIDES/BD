@@ -308,85 +308,6 @@ public class EstudianteDashboardViewController implements Initializable {
         return box;
     }
 
-    private void iniciarNavegacionPreguntas(VBox contenido, List<PreguntaDto> preguntas, Tab tabExamen) {
-        AtomicInteger indice = new AtomicInteger(0);
-
-        // Label del temporizador de examen
-        Label examenLabel = new Label();
-        examenLabel.setStyle("-fx-font-size: 16px; -fx-font-weight:bold;");
-        contenido.getChildren().add(examenLabel);
-
-        // Label del temporizador pregunta
-        Label timerLabel = new Label();
-        timerLabel.setStyle("-fx-font-size: 16px; -fx-font-weight:bold;");
-        contenido.getChildren().add(timerLabel);
-
-        // Label de progreso
-        Label progresoLabel = new Label();
-        progresoLabel.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
-        contenido.getChildren().add(progresoLabel);
-
-        // Vista inicial de la pregunta
-        contenido.getChildren().add(new Label()); // Placeholder, será reemplazado
-
-        // Botón Siguiente
-        btnSiguiente = new Button("Siguiente");
-        HBox hBoxBtn = new HBox(btnSiguiente);
-        hBoxBtn.setAlignment(Pos.CENTER_RIGHT);
-        contenido.getChildren().add(hBoxBtn);
-
-        // 1) Arrancar temporizador de examen (solo finaliza el examen, NO dispara siguiente)
-        int durExamen = examenesTableView.getSelectionModel().getSelectedItem().getDuracionExamen() * 60;
-        examTimeline = startTimer(
-                durExamen,
-                examenLabel,
-                "Tiempo restante examen",
-                this::formatHHMMSS,
-                () -> {
-                    examTimeline.stop();
-                    Alert a = new Alert(Alert.AlertType.INFORMATION, "Se acabó el tiempo del examen");
-                    a.showAndWait();
-                    terminarExamen(tabExamen);
-                }
-        );
-
-        // 2) Función para mostrar cada pregunta y reiniciar su temporizador
-        Consumer<Integer> mostrarPregunta = idx -> {
-            // detener el viejo timeline de pregunta (si existía)
-            if (questionTimeline != null) questionTimeline.stop();
-
-            progresoLabel.setText("Pregunta " + (idx + 1) + " de " + preguntas.size());
-            contenido.getChildren().set(3, construirVistaPregunta(preguntas.get(idx)));
-
-            // arrancar nuevo timeline de pregunta (este SÍ dispara siguiente)
-            questionTimeline = startTimer(
-                    preguntas.get(idx).getTiempo(),
-                    timerLabel,
-                    "Tiempo restante pregunta",
-                    this::formatMMSS,
-                    btnSiguiente::fire
-            );
-        };
-
-        // 3) Mostrar la primera
-        mostrarPregunta.accept(0);
-
-        btnSiguiente.setOnAction(e -> {
-
-            int actual = indice.get();
-            guardarRespuesta(idPresentado, preguntas.get(actual), contenido.getChildren().get(3));
-
-            int i = indice.incrementAndGet();
-            if (i < preguntas.size()) {
-                mostrarPregunta.accept(i);
-                if (i == preguntas.size()-1) btnSiguiente.setText("Finalizar");
-            } else {
-                btnSiguiente.setDisable(true);
-                terminarExamen(tabExamen);
-            }
-        });
-    }
-
     /**
      * Extrae la respuesta del Node (puede ser VBox, TextFlow, GridPane, etc.),
      * detecta el tipo de pregunta y llama al SP correspondiente.
@@ -477,13 +398,163 @@ public class EstudianteDashboardViewController implements Initializable {
                 break;
 
             case 5: // Emparejar Conceptos
+                VBox raiz5 = (VBox) vista;
+                GridPane destino = (GridPane) raiz5.getChildren().get(1); // gridDestino es el segundo hijo
 
+                List<String> pares = new ArrayList<>();
+
+                // Recorrer solo los Labels de la columna 0 (textos izquierda)
+                for (Node nodo : destino.getChildren()) {
+                    Integer col0 = GridPane.getColumnIndex(nodo);
+                    int col = (col0 == null ? 0 : col0);
+                    if (col != 0 || !(nodo instanceof Label)) continue;
+
+                    Integer row0 = GridPane.getRowIndex(nodo);
+                    int row = (row0 == null ? 0 : row0);
+
+                    String concepto = ((Label) nodo).getText();
+
+                    // Buscar en la misma fila el StackPane de la columna 1 (slot)
+                    String pareja = destino.getChildren().stream()
+                            .filter(n2 -> {
+                                Integer c = GridPane.getColumnIndex(n2);
+                                Integer r = GridPane.getRowIndex(n2);
+                                int cc = (c == null ? 0 : c);
+                                int rr = (r == null ? 0 : r);
+                                return cc == 1 && rr == row && n2 instanceof StackPane;
+                            })
+                            .map(n2 -> (StackPane) n2)
+                            .findFirst()
+                            .map(slot -> {
+                                if (slot.getChildren().isEmpty()) return "";
+                                Node tarjeta = slot.getChildren().get(0);
+                                // La tarjeta es un StackPane que contiene un Label
+                                if (tarjeta instanceof StackPane) {
+                                    if (!((StackPane) tarjeta).getChildren().isEmpty()) {
+                                        Node contenido = ((StackPane) tarjeta).getChildren().get(0);
+                                        if (contenido instanceof Label) {
+                                            return ((Label) contenido).getText();
+                                        }
+                                    }
+                                }
+                                return "";
+                            })
+                            .orElse("");
+
+                    pares.add(concepto + "=" + pareja);
+                }
+
+                String textoPares = String.join(";", pares);
+                estudianteDashboardController.registrarRespuestaEmparejar(idExamPres, idExamenPregunta, textoPares);
                 break;
 
-            case 6: // completar espacios
+            case 6: // Completar espacios
+                // 1) Obtener el TextFlow (primer hijo después de la pregunta)
+                VBox raiz6 = (VBox) vista;
+                TextFlow flujo = (TextFlow) raiz6.getChildren().get(1); // TextFlow está en posición 1
 
+                // 2) Recorrer nodos del TextFlow para encontrar los ComboBox
+                List<String> seleccionados = new ArrayList<>();
+                for (Node nodo : flujo.getChildren()) {
+                    if (nodo instanceof ComboBox) {
+                        ComboBox<String> combo = (ComboBox<String>) nodo;
+                        String valor = combo.getValue();
+                        if (valor != null && !valor.equals("— Ninguno —")) {
+                            seleccionados.add(valor.trim()); // Almacena sin espacios
+                        } else {
+                            seleccionados.add(""); // Espacio no respondido
+                        }
+                    }
+                }
+
+                // 3) Unir respuestas con ';' manteniendo el orden de los huecos
+                String respuesta = String.join(";", seleccionados);
+
+                // 4) Llamar al SP para guardar y validar
+                estudianteDashboardController.registrarRespuestaCompletar(
+                        idExamPres, pregunta.getIdPregunta(), respuesta
+                );
                 break;
         }
+    }
+
+    private void iniciarNavegacionPreguntas(VBox contenido, List<PreguntaDto> preguntas, Tab tabExamen) {
+        AtomicInteger indice = new AtomicInteger(0);
+
+        // Label del temporizador de examen
+        Label examenLabel = new Label();
+        examenLabel.setStyle("-fx-font-size: 16px; -fx-font-weight:bold;");
+        contenido.getChildren().add(examenLabel);
+
+        // Label del temporizador pregunta
+        Label timerLabel = new Label();
+        timerLabel.setStyle("-fx-font-size: 16px; -fx-font-weight:bold;");
+        contenido.getChildren().add(timerLabel);
+
+        // Label de progreso
+        Label progresoLabel = new Label();
+        progresoLabel.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+        contenido.getChildren().add(progresoLabel);
+
+        // Vista inicial de la pregunta
+        contenido.getChildren().add(new Label()); // Placeholder, será reemplazado
+
+        // Botón Siguiente
+        btnSiguiente = new Button("Siguiente");
+        HBox hBoxBtn = new HBox(btnSiguiente);
+        hBoxBtn.setAlignment(Pos.CENTER_RIGHT);
+        contenido.getChildren().add(hBoxBtn);
+
+        // 1) Arrancar temporizador de examen (solo finaliza el examen, NO dispara siguiente)
+        int durExamen = examenesTableView.getSelectionModel().getSelectedItem().getDuracionExamen() * 60;
+        examTimeline = startTimer(
+                durExamen,
+                examenLabel,
+                "Tiempo restante examen",
+                this::formatHHMMSS,
+                () -> {
+                    examTimeline.stop();
+                    Alert a = new Alert(Alert.AlertType.INFORMATION, "Se acabó el tiempo del examen");
+                    a.showAndWait();
+                    terminarExamen(tabExamen);
+                }
+        );
+
+        // 2) Función para mostrar cada pregunta y reiniciar su temporizador
+        Consumer<Integer> mostrarPregunta = idx -> {
+            // detener el viejo timeline de pregunta (si existía)
+            if (questionTimeline != null) questionTimeline.stop();
+
+            progresoLabel.setText("Pregunta " + (idx + 1) + " de " + preguntas.size());
+            contenido.getChildren().set(3, construirVistaPregunta(preguntas.get(idx)));
+
+            // arrancar nuevo timeline de pregunta (este SÍ dispara siguiente)
+            questionTimeline = startTimer(
+                    preguntas.get(idx).getTiempo(),
+                    timerLabel,
+                    "Tiempo restante pregunta",
+                    this::formatMMSS,
+                    btnSiguiente::fire
+            );
+        };
+
+        // 3) Mostrar la primera
+        mostrarPregunta.accept(0);
+
+        btnSiguiente.setOnAction(e -> {
+
+            int actual = indice.get();
+            guardarRespuesta(idPresentado, preguntas.get(actual), contenido.getChildren().get(3));
+
+            int i = indice.incrementAndGet();
+            if (i < preguntas.size()) {
+                mostrarPregunta.accept(i);
+                if (i == preguntas.size()-1) btnSiguiente.setText("Finalizar");
+            } else {
+                btnSiguiente.setDisable(true);
+                terminarExamen(tabExamen);
+            }
+        });
     }
 
     private void terminarExamen(Tab tabExamen) {

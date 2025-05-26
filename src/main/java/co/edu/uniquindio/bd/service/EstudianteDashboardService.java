@@ -78,4 +78,12 @@ public class EstudianteDashboardService {
     public void registrarRespuestaOrden(int idExamPres, int idExamenPregunta, String ordenStr) {
         estudianteDashboardRepository.registrarRespuestaOrden(idExamPres, idExamenPregunta, ordenStr);
     }
+
+    public void registrarRespuestaEmparejar(int idExamPres, int idExamenPregunta, String textoPares) {
+        estudianteDashboardRepository.registrarRespuestaEmparejar(idExamPres, idExamenPregunta, textoPares);
+    }
+
+    public void registrarRespuestaCompletar(int idExamPres, Integer idPregunta, String respuesta) {
+        estudianteDashboardRepository.registrarRespuestaCompletar(idExamPres, idPregunta, respuesta);
+    }
 }
