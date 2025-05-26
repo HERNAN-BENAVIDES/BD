@@ -1,8 +1,8 @@
 package co.edu.uniquindio.bd.viewController;
 
 import co.edu.uniquindio.bd.controller.LoginController;
-import co.edu.uniquindio.bd.model.Estudiante;
-import co.edu.uniquindio.bd.model.Profesor;
+import co.edu.uniquindio.bd.dto.EstudianteDto;
+import co.edu.uniquindio.bd.dto.ProfesorDto;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,6 +17,7 @@ import javafx.animation.ScaleTransition;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import co.edu.uniquindio.bd.BdApplication;
 import java.io.IOException;
@@ -170,7 +171,40 @@ public class LoginViewController implements Initializable {
             // Failed login
             statusLabel.setText("Credenciales incorrectas. Intente nuevamente.");
         }
+
+
+        try {
+            if (selectedRole.equals("Profesor")) {
+
+                if (profesor != null && profesor.getIdprofesor() != null) {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/co/edu/uniquindio/bd/CrearExamen.fxml"));
+                    loader.setControllerFactory(BdApplication.getSpringContext()::getBean); // Configurar el ControllerFactory
+
+                    Parent root = loader.load(); // Cargar el FXML después de configurar el ControllerFactory
+                    CrearExamenViewController controller = loader.getController(); // Obtener el controlador
+                    controller.setProfesor(profesor); // Pasar el profesor al controlador
+
+                    Scene scene = new Scene(root);
+                    Stage stage = (Stage) loginButton.getScene().getWindow();
+                    stage.setScene(scene);
+                    stage.setMaximized(true);
+                    stage.setTitle("Crear Examen");
+                    stage.show();
+                } else {
+                    statusLabel.setText("Credenciales incorrectas para el profesor.");
+                }
+            } else {
+                statusLabel.setText("Funcionalidad para estudiantes no implementada.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            statusLabel.setText("Ocurrió un error al cargar la ventana.");
+        }
     }
+
+
+
+
 
     /**
      * Basic email validation

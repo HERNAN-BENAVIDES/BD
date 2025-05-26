@@ -1,9 +1,8 @@
 package co.edu.uniquindio.bd.controller;
 
-import co.edu.uniquindio.bd.model.Examen;
+import co.edu.uniquindio.bd.dto.Examen;
 import co.edu.uniquindio.bd.model.ExamenPregunta;
-import co.edu.uniquindio.bd.model.Pregunta;
-import co.edu.uniquindio.bd.model.Profesor;
+import co.edu.uniquindio.bd.dto.Pregunta;
 import co.edu.uniquindio.bd.service.ExamenService;
 import co.edu.uniquindio.bd.service.GrupoService;
 import org.springframework.beans.factory.annotation.Autowired;

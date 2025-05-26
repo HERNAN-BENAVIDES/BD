@@ -1,8 +1,8 @@
 package co.edu.uniquindio.bd.repository;
 
-import co.edu.uniquindio.bd.model.Examen;
+import co.edu.uniquindio.bd.dto.Examen;
 import co.edu.uniquindio.bd.model.ExamenPregunta;
-import co.edu.uniquindio.bd.model.Pregunta;
+import co.edu.uniquindio.bd.dto.Pregunta;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.ParameterMode;
 import jakarta.persistence.PersistenceContext;

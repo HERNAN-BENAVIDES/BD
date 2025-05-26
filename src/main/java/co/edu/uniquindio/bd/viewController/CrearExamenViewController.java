@@ -2,11 +2,9 @@ package co.edu.uniquindio.bd.viewController;
 
 import co.edu.uniquindio.bd.BdApplication;
 import co.edu.uniquindio.bd.controller.CrearExamenController;
-import co.edu.uniquindio.bd.controller.LoginController;
-import co.edu.uniquindio.bd.model.Examen;
-import co.edu.uniquindio.bd.model.Grupo;
-import co.edu.uniquindio.bd.model.Pregunta;
-import co.edu.uniquindio.bd.model.Profesor;
+import co.edu.uniquindio.bd.dto.Examen;
+import co.edu.uniquindio.bd.dto.Pregunta;
+import co.edu.uniquindio.bd.dto.ProfesorDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -19,7 +17,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -154,11 +151,11 @@ public class CrearExamenViewController {
     @FXML
     private Label bancoPreguntasLabel;
 
-    private Profesor profesor;
+    private ProfesorDto profesor;
     private Map<String, Object> grupoSeleccionado;
     private Examen examenCreado;
 
-    public void setProfesor(Profesor profesor) {
+    public void setProfesor(ProfesorDto profesor) {
         this.profesor = profesor;
         cargarDatos();
     }

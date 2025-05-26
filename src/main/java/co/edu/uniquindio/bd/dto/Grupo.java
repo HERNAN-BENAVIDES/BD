@@ -1,4 +1,4 @@
-package co.edu.uniquindio.bd.model;
+package co.edu.uniquindio.bd.dto;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

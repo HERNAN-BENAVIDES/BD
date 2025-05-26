@@ -1,8 +1,8 @@
 package co.edu.uniquindio.bd.service;
 
-import co.edu.uniquindio.bd.model.Examen;
+import co.edu.uniquindio.bd.dto.Examen;
 import co.edu.uniquindio.bd.model.ExamenPregunta;
-import co.edu.uniquindio.bd.model.Pregunta;
+import co.edu.uniquindio.bd.dto.Pregunta;
 import co.edu.uniquindio.bd.repository.ExamenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
