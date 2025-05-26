@@ -86,4 +86,8 @@ public class EstudianteDashboardService {
     public void registrarRespuestaCompletar(int idExamPres, Integer idPregunta, String respuesta) {
         estudianteDashboardRepository.registrarRespuestaCompletar(idExamPres, idPregunta, respuesta);
     }
+
+    public List<ExamenPresentadoDto> obtenerExamenesPresentados(int idestudiante) {
+        return estudianteDashboardRepository.obtenerExamenesPresentados(idestudiante);
+    }
 }

@@ -27,6 +27,7 @@ import javafx.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.awt.desktop.SystemEventListener;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.time.LocalDate;
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class EstudianteDashboardViewController implements Initializable {
+
 
     @Autowired
     private EstudianteDashboardController estudianteDashboardController;
@@ -136,7 +138,19 @@ public class EstudianteDashboardViewController implements Initializable {
     private VBox contenedorPreguntas;
 
     @FXML
-    private TableView<?> gradesTableView;
+    private TableView<ExamenPresentadoDto> notasTableView;
+
+    @FXML
+    public TableColumn<String,ExamenPresentadoDto> colFechaNota;
+
+    @FXML
+    public TableColumn<Integer, ExamenPresentadoDto> colIdExamenNota;
+
+    @FXML
+    public TableColumn<Integer, ExamenPresentadoDto> colCalificacionNota;
+
+    @FXML
+    public TableColumn<String, ExamenPresentadoDto> colNombreExamenNota;
 
     @FXML
     private Button logoutButton;
@@ -159,6 +173,12 @@ public class EstudianteDashboardViewController implements Initializable {
         tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
             if (newTab.getText().equals("Examenes")) {
                 cargarExamenesEstudiante();
+            }
+        });
+
+        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab.getText().equals("Calificaciones")) {
+                cargarTablaNotas();
             }
         });
 
@@ -217,6 +237,18 @@ public class EstudianteDashboardViewController implements Initializable {
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
     }
 
+    private void cargarTablaNotas(){
+        colIdExamenNota.setCellValueFactory(new PropertyValueFactory<>("idExamen"));
+        colCalificacionNota.setCellValueFactory(new PropertyValueFactory<>("calificacion"));
+        colFechaNota.setCellValueFactory(new PropertyValueFactory<>("fecha"));
+        colNombreExamenNota.setCellValueFactory(new PropertyValueFactory<>("nombreExamen"));
+
+        if(estudiante != null){
+            List<ExamenPresentadoDto> examenes = estudianteDashboardController.obtenerExamenesPresentados(estudiante.getIdestudiante());
+            notasTableView.setItems(FXCollections.observableArrayList(examenes));
+        }
+    }
+
 
     /**
      * Sets the student data and updates the UI
@@ -270,7 +302,9 @@ public class EstudianteDashboardViewController implements Initializable {
 
         // 2. Recuperar preguntas
         List<PreguntaDto> preguntas = estudianteDashboardController
-                .obtenerPreguntasExamen(examenesTableView.getSelectionModel().getSelectedItem().getIdExamen());
+                .obtenerPreguntasExamen(idPresentado);
+
+
         if (preguntas.isEmpty()) {
             mostrarAlerta(Alert.AlertType.WARNING, "Examen vacío", "No hay preguntas para este examen.");
             return;

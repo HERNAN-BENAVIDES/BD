@@ -84,4 +84,8 @@ public class EstudianteDashboardController {
     public void registrarRespuestaCompletar(int idExamPres, Integer idPregunta, String respuesta) {
         estudianteDashboardService.registrarRespuestaCompletar(idExamPres, idPregunta, respuesta);
     }
+
+    public List<ExamenPresentadoDto> obtenerExamenesPresentados(int idestudiante) {
+        return estudianteDashboardService.obtenerExamenesPresentados(idestudiante);
+    }
 }

@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -387,5 +388,43 @@ public class EstudianteDashboardRepository {
         sp.setParameter("p_idExamenPregunta", idPregunta);
         sp.setParameter("p_orden", respuesta);
         sp.execute();
+    }
+
+    public List<ExamenPresentadoDto> obtenerExamenesPresentados(int idestudiante) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("OBTENER_EXAMENES_PRESENTADOS_ESTUDIANTE");
+
+        sp.registerStoredProcedureParameter(1, Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter(2, void.class, ParameterMode.REF_CURSOR);
+
+        sp.setParameter(1, idestudiante);
+
+        sp.execute();
+
+        DateTimeFormatter formatterSalida = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        List<ExamenPresentadoDto> examenes = new ArrayList<>();
+        List<Object[]> resultList = sp.getResultList();
+
+        for (Object[] row : resultList) {
+            ExamenPresentadoDto examen = new ExamenPresentadoDto();
+            examen.setIdExamen((Integer) row[0]);
+
+            // Obtén la fecha como java.sql.Timestamp y conviértela a LocalDateTime
+            if (row[1] instanceof Timestamp) {
+                Timestamp timestamp = (Timestamp) row[1];
+                LocalDateTime fecha = timestamp.toLocalDateTime();
+                String fechaFormateada = fecha.format(formatterSalida);
+                examen.setFecha(fechaFormateada);
+            } else {
+                examen.setFecha("Fecha inválida");
+            }
+
+            examen.setCalificacion((BigDecimal) row[2]);
+            examen.setNombreExamen((String) row[3]);
+
+            examenes.add(examen);
+        }
+
+        return examenes;
     }
 }
