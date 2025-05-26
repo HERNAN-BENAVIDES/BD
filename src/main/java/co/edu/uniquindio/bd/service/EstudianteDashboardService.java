@@ -74,4 +74,8 @@ public class EstudianteDashboardService {
     public void registrarRespuestaMultiple(int idExamPres, int idExamenPregunta, String todas) {
         estudianteDashboardRepository.registrarRespuestaMultiple(idExamPres, idExamenPregunta, todas);
     }
+
+    public void registrarRespuestaOrden(int idExamPres, int idExamenPregunta, String ordenStr) {
+        estudianteDashboardRepository.registrarRespuestaOrden(idExamPres, idExamenPregunta, ordenStr);
+    }
 }

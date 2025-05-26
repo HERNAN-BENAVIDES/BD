@@ -159,13 +159,20 @@ public class EstudianteDashboardViewController implements Initializable {
         tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
             if (newTab.getText().equals("Examenes")) {
                 cargarExamenesEstudiante();
+            }
+        });
 
-                examenesTableView.getSelectionModel().selectedItemProperty().addListener((obsExamen, oldExamen, newExamen) -> {
-                    if (newExamen != null) {
-                        verificarDisponibilidadExamen(newExamen);
-                    }
-                });
+        // 1) Listener de selección en la tabla, UNA sola vez
+        examenesTableView.getSelectionModel().selectedItemProperty().addListener((obsExamen, oldExamen, newExamen) -> {
+            if (newExamen != null) {
+                verificarDisponibilidadExamen(newExamen);
+            }
+        });
 
+        // 2) Listener de cambio de pestaña para recargar los exámenes
+        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+            if (newTab.getText().equals("Examenes")) {
+                cargarExamenesEstudiante();
             }
         });
 
@@ -419,7 +426,6 @@ public class EstudianteDashboardViewController implements Initializable {
                     // 1) Únelas con ';' SIN espacios
                     String todas = String.join(";", seleccionadas);
                     // 2) Llama al SP
-                    System.out.println(todas);
                     estudianteDashboardController
                             .registrarRespuestaMultiple(idExamPres, idExamenPregunta, todas);
                 }
@@ -447,11 +453,30 @@ public class EstudianteDashboardViewController implements Initializable {
                 }
                 break;
 
-            case 4: // ordenar conceptos
-
+            case 4: // Ordenar conceptos
+                // 1) El VBox raíz es ‘vista’, y el ScrollPane está en la segunda posición:
+                VBox raiz = (VBox) vista;
+                ScrollPane scroll = (ScrollPane) raiz.getChildren().filtered(n -> n instanceof ScrollPane).get(0);
+                // 2) El contenido del ScrollPane es un VBox con cada HBox fila:
+                VBox lista = (VBox) scroll.getContent();
+                // 3) Extraer el texto de cada fila (quito la numeración “1. ” al inicio):
+                List<String> orden = lista.getChildren().stream()
+                        .map(n -> (HBox) n)
+                        .map(h -> {
+                            Label lbl = (Label) h.getChildren().get(0);
+                            String txt = lbl.getText();
+                            // quita el “X. ” inicial
+                            return txt.replaceFirst("^\\d+\\.\\s*", "");
+                        })
+                        .collect(Collectors.toList());
+                // 4) Concatenar en un solo String separado por ‘;’
+                String ordenStr = String.join(";", orden);
+                // 5) Llamar al SP que guarda la respuesta de “ordenar conceptos”
+                estudianteDashboardController
+                        .registrarRespuestaOrden(idExamPres, idExamenPregunta, ordenStr);
                 break;
 
-            case 5: // Ordenar Conceptos
+            case 5: // Emparejar Conceptos
 
                 break;
 

@@ -72,4 +72,8 @@ public class EstudianteDashboardController {
     public void registrarRespuestaMultiple(int idExamPres, int idExamenPregunta, String todas) {
         estudianteDashboardService.registrarRespuestaMultiple(idExamPres, idExamenPregunta, todas);
     }
+
+    public void registrarRespuestaOrden(int idExamPres, int idExamenPregunta, String ordenStr) {
+        estudianteDashboardService.registrarRespuestaOrden(idExamPres, idExamenPregunta, ordenStr);
+    }
 }

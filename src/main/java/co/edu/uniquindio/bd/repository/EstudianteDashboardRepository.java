@@ -355,4 +355,15 @@ public class EstudianteDashboardRepository {
 
         sp.execute();
     }
+
+    public void registrarRespuestaOrden(int idExamPres, int idExamenPregunta, String ordenStr) {
+        StoredProcedureQuery sp = em.createStoredProcedureQuery("REGISTRAR_RESPUESTA_ORDEN");
+        sp.registerStoredProcedureParameter("p_idExamPres", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_idExamenPregunta", Integer.class, ParameterMode.IN);
+        sp.registerStoredProcedureParameter("p_orden", String.class, ParameterMode.IN);  // la lista “;”
+        sp.setParameter("p_idExamPres", idExamPres);
+        sp.setParameter("p_idExamenPregunta", idExamenPregunta);
+        sp.setParameter("p_orden", ordenStr);
+        sp.execute();
+    }
 }
