@@ -16,4 +16,8 @@ public class GrupoService {
     public List<Map<String, Object>> obtenerGruposPorProfesor(int idProfesor) {
         return grupoRepository.obtenerGruposPorProfesor(idProfesor);
     }
+
+    public List<Map<String, Object>> obtenerTemasPorGrupo(int idGrupo) {
+        return grupoRepository.obtenerTemasPorGrupo(idGrupo);
+    }
 }

@@ -121,6 +121,7 @@ public class LoginViewController implements Initializable {
                     Scene scene = new Scene(root);
                     Stage stage = (Stage) loginButton.getScene().getWindow();
                     stage.setScene(scene);
+                    stage.setMaximized(true);
                     stage.setTitle("Crear Examen");
                     stage.show();
                 } else {

@@ -43,4 +43,32 @@ public class GrupoRepository {
             throw new RuntimeException("Error al obtener los grupos: " + e.getMessage(), e);
         }
     }
+
+
+    @Transactional
+    public List<Map<String, Object>> obtenerTemasPorGrupo(int idGrupo) {
+        try {
+            StoredProcedureQuery query = em.createStoredProcedureQuery("obtener_temas_por_grupo");
+            query.registerStoredProcedureParameter("p_idgrupo", Integer.class, jakarta.persistence.ParameterMode.IN);
+            query.registerStoredProcedureParameter("p_resultado", void.class, jakarta.persistence.ParameterMode.REF_CURSOR);
+            query.setParameter("p_idgrupo", idGrupo);
+            query.execute();
+
+            List<Object[]> results = query.getResultList();
+            List<Map<String, Object>> temas = new ArrayList<>();
+            for (Object[] row : results) {
+                Map<String, Object> tema = new HashMap<>();
+                tema.put("idcurso", row[0]);
+                tema.put("idunidad", row[1]);
+                tema.put("nombre_unidad", row[2]);
+                tema.put("idtema", row[3]);
+                tema.put("nombre_tema", row[4]);
+                tema.put("descripcion_tema", row[5]);
+                temas.add(tema);
+            }
+            return temas;
+        } catch (Exception e) {
+            throw new RuntimeException("Error al obtener los temas: " + e.getMessage(), e);
+        }
+    }
 }

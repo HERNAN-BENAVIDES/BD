@@ -53,3 +53,16 @@
 .card-button:pressed {
     -fx-background-color: #303f9f; /* Color al presionar */
 }
+
+.escogerPreguntasButton {
+    -fx-background-color: #3949ab;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-pref-width: 400px;
+    -fx-pref-height: 40px;
+}
+
+.escogerPreguntasButton:hover {
+    -fx-background-color: #5c6bc0;
+}
