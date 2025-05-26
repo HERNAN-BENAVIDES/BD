@@ -1,8 +1,8 @@
 package co.edu.uniquindio.bd.viewController;
 
 import co.edu.uniquindio.bd.controller.LoginController;
-import co.edu.uniquindio.bd.dto.EstudianteDto;
-import co.edu.uniquindio.bd.dto.ProfesorDto;
+import co.edu.uniquindio.bd.model.Estudiante;
+import co.edu.uniquindio.bd.model.Profesor;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,9 +17,8 @@ import javafx.animation.ScaleTransition;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-
+import co.edu.uniquindio.bd.BdApplication;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -102,25 +101,13 @@ public class LoginViewController implements Initializable {
         String password = passwordField.getText();
         String selectedRole = roleComboBox.getValue();
 
-        // Validate inputs
-        if (email.isEmpty()) {
-            statusLabel.setText("Por favor, ingrese su correo electrónico");
+        if (email.isEmpty() || password.isEmpty() || selectedRole == null) {
+            statusLabel.setText("Por favor, complete todos los campos.");
             return;
         }
 
-        if (password.isEmpty()) {
-            statusLabel.setText("Por favor, ingrese su contraseña");
-            return;
-        }
-
-        if (selectedRole == null) {
-            statusLabel.setText("Por favor, seleccione un rol");
-            return;
-        }
-
-        // Basic email validation
         if (!isValidEmail(email)) {
-            statusLabel.setText("Por favor, ingrese un correo electrónico válido");
+            statusLabel.setText("Por favor, ingrese un correo electrónico válido.");
             return;
         }
 

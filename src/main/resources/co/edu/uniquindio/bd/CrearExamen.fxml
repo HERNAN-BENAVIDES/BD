@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane prefHeight="600" prefWidth="800" stylesheets="@../../../../application.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="co.edu.uniquindio.bd.viewController.CrearExamenViewController">
+    <left>
+        <VBox spacing="0" style="-fx-background-color: #303f9f; -fx-padding: 0;">
+            <children>
+                <!-- Título centrado -->
+                <HBox alignment="CENTER" style="-fx-padding: 20 0 10 0;">
+                    <children>
+                        <Label text="EducaApp" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;" />
+                    </children>
+                </HBox>
+                <!-- Opciones de navegación -->
+                <Button fx:id="crearExamenButton" styleClass="dashboard-button" text="Crear Examen" onAction="#handleDashboardNavigation" />
+                <Button fx:id="verExamenesButton" styleClass="dashboard-button" text="Ver Exámenes" onAction="#handleDashboardNavigation" />
+                <Button fx:id="crearPreguntaButton" styleClass="dashboard-button" text="Crear Pregunta" onAction="#handleDashboardNavigation" />
+                <Button fx:id="verEstadisticasButton" styleClass="dashboard-button" text="Ver Estadísticas" onAction="#handleDashboardNavigation" />
+            </children>
+        </VBox>
+    </left>
+
+    <center>
+        <StackPane fx:id="contentStack" style="-fx-padding: 20;">
+            <!-- Contenedor de selección de grupo -->
+            <VBox fx:id="groupSelectionContainer"
+                  alignment="TOP_CENTER"
+                  spacing="20"
+                  style="-fx-background-color: #ede7f6; -fx-background-radius: 15; -fx-padding: 20;">
+                <children>
+                    <Label style="-fx-font-size: 24px; -fx-font-weight: bold;" text="Crear Examen" />
+                    <Label style="-fx-font-size: 16px;" text="Seleccione el grupo en donde desea crear el examen." />
+                    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+                        <content>
+                            <VBox fx:id="groupContainer" spacing="15" style="-fx-padding: 10;" />
+                        </content>
+                    </ScrollPane>
+                </children>
+            </VBox>
+
+
+            <!-- Formulario para crear examen -->
+            <ScrollPane fitToWidth="true" fx:id="examFormScrollPane" visible="false" managed="false" style="-fx-background: #ede7f6; -fx-padding: 20; -fx-background-radius: 15;">
+                <content>
+                    <VBox alignment="TOP_CENTER" spacing="20" style="-fx-padding: 20;">
+                        <!-- Título del formulario -->
+                        <Label text="FORMULARIO DE EXAMEN" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
+
+                        <!-- Contenedor Examen -->
+                        <VBox spacing="15" style="-fx-background-color: #ffffff; -fx-padding: 20; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);">
+                            <Label text="Examen" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+                            <GridPane hgap="10" vgap="15">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="200" />
+                                    <ColumnConstraints minWidth="300" />
+                                    <ColumnConstraints minWidth="100" />
+                                    <ColumnConstraints minWidth="150" />
+                                </columnConstraints>
+                                <children>
+                                    <!-- Nombre del Examen -->
+                                    <Label text="Nombre del Examen:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                    <TextField fx:id="nombreExamenField" GridPane.columnIndex="1" GridPane.rowIndex="0" promptText="Examen de Lengua y Literatura" />
+
+                                    <!-- Descripción del Examen -->
+                                    <Label text="Descripción del Examen:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                    <ScrollPane fitToWidth="true" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                        <content>
+                                            <TextArea fx:id="descripcionExamenField" prefRowCount="2" wrapText="true" promptText="Examen sobre la evolución del lenguaje y la literatura en diferentes épocas" />
+                                        </content>
+                                    </ScrollPane>
+
+                                    <!-- Fecha Disponible Inicio -->
+                                    <Label text="Fecha Disponible Inicio:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                    <DatePicker fx:id="fechaInicioPicker" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <Label text="Hora Inicio:" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                                    <TextField fx:id="horaInicioField" GridPane.columnIndex="3" GridPane.rowIndex="2" promptText="06:00" />
+
+                                    <!-- Fecha Disponible Final -->
+                                    <Label text="Fecha Disponible Final:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                    <DatePicker fx:id="fechaFinalPicker" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                    <Label text="Hora Fin:" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+                                    <TextField fx:id="horaFinField" GridPane.columnIndex="3" GridPane.rowIndex="3" promptText="16:00" />
+
+                                    <!-- Tiempo Máximo del Examen -->
+                                    <Label text="Tiempo Máximo del Examen (min):" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                    <TextField fx:id="tiempoMaximoField" GridPane.columnIndex="1" GridPane.rowIndex="4" promptText="60" />
+
+                                    <!-- Profesor autor -->
+                                    <Label text="Profesor Autor:" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                    <TextField fx:id="profesorAutorField" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+
+                                    <!-- Grupo -->
+                                    <Label text="Grupo:" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                                    <TextField fx:id="grupoField" GridPane.columnIndex="1" GridPane.rowIndex="6" editable="false" />
+
+                                    <!-- Curso -->
+                                    <Label text="Curso:" GridPane.columnIndex="0" GridPane.rowIndex="7" />
+                                    <TextField fx:id="cursoField" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                                </children>
+                            </GridPane>
+                        </VBox>
+
+                        <!-- Contenedor Calificación -->
+                        <VBox spacing="15" style="-fx-background-color: #ffffff; -fx-padding: 20; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);">
+                            <Label text="Calificación" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+                            <GridPane hgap="10" vgap="10">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="200" />
+                                    <ColumnConstraints minWidth="300" />
+                                </columnConstraints>
+                                <children>
+                                    <!-- Porcentaje en el Curso -->
+                                    <Label text="Porcentaje en el Curso (%):" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                    <TextField fx:id="porcentajeCursoField" GridPane.columnIndex="1" GridPane.rowIndex="0" promptText="20.0" />
+
+                                    <!-- Nota de Aprobación -->
+                                    <Label text="Nota de Aprobación:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                    <TextField fx:id="notaAprobacionField" GridPane.columnIndex="1" GridPane.rowIndex="1" promptText="3,50" />
+                                </children>
+                            </GridPane>
+                        </VBox>
+
+                        <!-- Contenedor Preguntas -->
+                        <VBox spacing="15" style="-fx-background-color: #ffffff; -fx-padding: 20; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);">
+                            <Label text="Preguntas" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+                            <GridPane hgap="10" vgap="10">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="200" />
+                                    <ColumnConstraints minWidth="300" />
+                                </columnConstraints>
+                                <children>
+                                    <!-- Total de Preguntas -->
+                                    <Label text="Total de Preguntas:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                    <TextField fx:id="totalPreguntasField" GridPane.columnIndex="1" GridPane.rowIndex="0" promptText="50" />
+
+                                    <!-- Preguntas por Estudiante -->
+                                    <Label text="Preguntas por Estudiante:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                    <TextField fx:id="preguntasPorEstudianteField" GridPane.columnIndex="1" GridPane.rowIndex="1" promptText="20" />
+
+                                    <!-- Preguntas Manualmente Escogidas -->
+                                    <Label text="Preguntas Manualmente Escogidas:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                    <TextField fx:id="preguntasManualField" GridPane.columnIndex="1" GridPane.rowIndex="2" promptText="10" />
+
+                                    <!-- Preguntas Aleatoriamente Escogidas -->
+                                    <Label text="Preguntas Aleatoriamente Escogidas:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                    <TextField fx:id="preguntasAleatorioField" GridPane.columnIndex="1" GridPane.rowIndex="3" promptText="40" />
+                                </children>
+                            </GridPane>
+                        </VBox>
+
+                        <!-- Contenedor Temas -->
+                        <VBox spacing="15" style="-fx-background-color: #ffffff; -fx-padding: 20; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);">
+                            <Label text="Tema" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+                            <Label fx:id="descripcionTemasLabel" style="-fx-font-size: 14px;" />
+                            <ScrollPane fitToWidth="true" style="-fx-padding: 10;">
+                                <content>
+                                    <TableView fx:id="temasTable" prefHeight="200">
+                                        <columns>
+                                            <TableColumn fx:id="nombreCursoColumn" text="Nombre Curso" prefWidth="250"/>
+                                            <TableColumn fx:id="nombreUnidadColumn" text="Nombre Unidad" prefWidth="250" />
+                                            <TableColumn fx:id="nombreTemaColumn" text="Nombre Tema" prefWidth="300" />
+                                            <TableColumn fx:id="descripcionTemaColumn" text="Descripción Tema" prefWidth="350"/>
+                                        </columns>
+                                    </TableView>
+                                </content>
+                            </ScrollPane>
+                        </VBox>
+
+                        <!-- Botón Escoger Preguntas -->
+                        <Button text="Escoger Preguntas" fx:id="escogerPreguntasButton" styleClass="escogerPreguntasButton" onAction="#handleEscogerPreguntasButtonClick" />
+                    </VBox>
+                </content>
+            </ScrollPane>
+
+            <!-- Formulario para escoger preguntas examen -->
+            <ScrollPane fx:id="questionSelectionScrollPane" fitToWidth="true" visible="false" managed="false" style="-fx-background: #ede7f6; -fx-padding: 20; -fx-background-radius: 15;">
+                <content>
+                    <VBox alignment="TOP_CENTER" spacing="20" style="-fx-padding: 20;">
+                        <!-- Título -->
+                        <Label text="SELECCIÓN DE PREGUNTAS" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
+
+                        <!-- Contenedor Nivel Dificultad -->
+                        <VBox spacing="10" style="-fx-background-color: #ffffff; -fx-padding: 20; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);">
+                            <Label text="Nivel Dificultad" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                            <Label text="Procure mantener un equilibrio en la dificultad de las preguntas seleccionadas." style="-fx-font-size: 14px;" />
+                            <HBox spacing="20" alignment="CENTER">
+                                <Label text="Difícil:" />
+                                <Label fx:id="dificilLabel" text="0" style="-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 18px; -fx-padding: 10; -fx-border-radius: 5; -fx-background-radius: 5;" />
+                                <Label text="Medio:" />
+                                <Label fx:id="medioLabel" text="0" style="-fx-background-color: #ffeb3b; -fx-text-fill: white; -fx-font-size: 18px; -fx-padding: 10; -fx-border-radius: 5; -fx-background-radius: 5;" />
+                                <Label text="Fácil:" />
+                                <Label fx:id="facilLabel" text="0" style="-fx-background-color: #4caf50; -fx-text-fill: white; -fx-font-size: 18px; -fx-padding: 10; -fx-border-radius: 5; -fx-background-radius: 5;" />
+                            </HBox>
+                        </VBox>
+
+                        <!-- Contenedor Indicaciones -->
+                        <VBox spacing="15" style="-fx-background-color: #ffffff; -fx-padding: 20; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);">
+                            <Label text="Indicaciones" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                            <Label text="En esta ventana, debe seleccionar las preguntas manualmente escogidas para la configuración de su examen. Puede seleccionar únicamente la cantidad de Preguntas Manuales indicadas a continuación, las demás preguntas serán seleccionadas automáticamente después de su confirmación."
+                                   style="-fx-font-size: 14px;" wrapText="true" />
+                            <GridPane hgap="10" vgap="10">
+                                <children>
+                                    <Label text="Preguntas Manuales:" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                    <TextField fx:id="preguntasManualesField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+                                    <Label text="Preguntas Automáticas:" style="-fx-font-weight: bold;" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                    <TextField fx:id="preguntasAleatoriasField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                </children>
+                            </GridPane>
+                        </VBox>
+
+                        <!-- Botones -->
+                        <HBox spacing="20" alignment="CENTER">
+                            <Button text="Crear Pregunta" fx:id="crearPreguntaNuevaButton" styleClass="escogerPreguntasButton" prefWidth="200" />
+                            <Button text="Confirmar Preguntas Seleccionadas" fx:id="confirmarPreguntasButton" styleClass="escogerPreguntasButton" prefWidth="400" onAction="#handleConfirmarPreguntasButtonClick"/>
+                        </HBox>
+
+                        <!-- Banco de Preguntas -->
+                        <VBox spacing="10" style="-fx-background-color: #ffffff; -fx-padding: 20; -fx-background-radius: 15; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);">
+                            <Label fx:id="bancoPreguntasLabel" text="BANCO DE PREGUNTAS - TEMA: " style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                            <VBox fx:id="bancoPreguntasContainer" spacing="10" />
+                        </VBox>
+                    </VBox>
+                </content>
+            </ScrollPane>
+
+        </StackPane>
+    </center>
+</BorderPane>
